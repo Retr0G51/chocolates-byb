@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .filtros { text-align: center; margin: 2rem 0; }
+    .filtros .btn { margin: 0 5px; }
+    .productos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 2rem 0; }
+    .producto-card { background: var(--blanco); border-radius: 15px; overflow: hidden; box-shadow: 0 3px 15px rgba(0,0,0,0.1); transition: transform 0.3s; }
+    .producto-card:hover { transform: translateY(-5px); box-shadow: 0 5px 25px rgba(0,0,0,0.15); }
+    .producto-img { width: 100%; height: 200px; background: linear-gradient(45deg, var(--chocolate), var(--chocolate-dark)); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: var(--dorado); }
+    .producto-info { padding: 1.5rem; }
+    .producto-info h3 { color: var(--chocolate); margin-bottom: 0.5rem; }
+    .producto-precio { font-size: 1.5rem; color: var(--dorado); font-weight: bold; margin: 1rem 0; }
+</style>
+
+<section class="container">
+    <h1 style="text-align: center; color: var(--chocolate); margin: 2rem 0;">Catálogo de Productos</h1>
+    
+    <div class="filtros">
+        <a href="/catalogo?tipo=todos" class="btn {% if tipo_actual == 'todos' %}active{% endif %}">Todos</a>
+        <a href="/catalogo?tipo=oscuro" class="btn {% if tipo_actual == 'oscuro' %}active{% endif %}">Chocolate Oscuro</a>
+        <a href="/catalogo?tipo=blanco" class="btn {% if tipo_actual == 'blanco' %}active{% endif %}">Chocolate Blanco</a>
+        <a href="/catalogo?tipo=con_leche" class="btn {% if tipo_actual == 'con_leche' %}active{% endif %}">Con Leche</a>
+    </div>
+
+    <div class="productos-grid">
+        {% for producto in productos %}
+        <div class="producto-card">
+            <div class="producto-img">
+                {% if producto.tipo == 'blanco' %}??{% else %}??{% endif %}
+            </div>
+            <div class="producto-info">
+                <h3>{{ producto.nombre }}</h3>
+                <p>{{ producto.descripcion }}</p>
+                <p class="producto-precio">${{ "%.2f"|format(producto.precio) }}</p>
+                <p style="color: #666;">Stock: {{ producto.stock }} unidades</p>
+                <a href="/producto/{{ producto.id }}" class="btn">Ver Detalles</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

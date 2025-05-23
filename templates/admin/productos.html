@@ -1,0 +1,107 @@
+<!-- ========== PRODUCTOS.HTML ========== -->
+<!-- templates/admin/productos.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Productos - Chocolates ByB</title>
+    <style>
+        /* Estilos base reutilizados */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --chocolate: #6B4423;
+            --chocolate-dark: #4A2C17;
+            --crema: #FFF8E7;
+            --dorado: #D4AF37;
+            --verde: #28a745;
+            --rojo: #dc3545;
+            --azul: #007bff;
+        }
+        body { font-family: 'Arial', sans-serif; background: #f4f4f4; color: #333; }
+        .admin-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: var(--chocolate-dark); color: white; padding: 20px 0; }
+        .sidebar h2 { color: var(--dorado); padding: 0 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-menu { list-style: none; margin-top: 20px; }
+        .sidebar-menu a { display: block; color: white; text-decoration: none; padding: 15px 20px; transition: background 0.3s; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: var(--chocolate); border-left: 3px solid var(--dorado); }
+        .main-content { flex: 1; padding: 20px; }
+        .header { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .producto-admin-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .producto-img-admin { height: 150px; background: var(--chocolate); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--dorado); }
+        .producto-info-admin { padding: 15px; }
+        .producto-actions { display: flex; justify-content: space-between; margin-top: 15px; }
+        .btn { padding: 8px 16px; border-radius: 5px; text-decoration: none; font-size: 0.9rem; border: none; cursor: pointer; }
+        .btn-primary { background: var(--azul); color: white; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-danger { background: var(--rojo); color: white; }
+        .btn-new { background: var(--verde); color: white; padding: 10px 20px; }
+        .stock-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; margin-left: 10px; }
+        .stock-ok { background: #d4edda; color: #155724; }
+        .stock-low { background: #fff3cd; color: #856404; }
+        .stock-out { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <h2>?? Admin Panel</h2>
+            <ul class="sidebar-menu">
+                <li><a href="/admin">?? Dashboard</a></li>
+                <li><a href="/admin/pedidos">?? Pedidos</a></li>
+                <li><a href="/admin/productos" class="active">?? Productos</a></li>
+                <li><a href="/admin/contabilidad">?? Contabilidad</a></li>
+                <li><a href="/" target="_blank">?? Ver Tienda</a></li>
+                <li><a href="/logout">?? Salir</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1>Gestión de Productos</h1>
+                <a href="/admin/producto/nuevo" class="btn btn-new">+ Nuevo Producto</a>
+            </div>
+
+            <div class="productos-grid">
+                {% for producto in productos %}
+                <div class="producto-admin-card">
+                    <div class="producto-img-admin">
+                        {% if producto.tipo == 'blanco' %}??{% else %}??{% endif %}
+                    </div>
+                    <div class="producto-info-admin">
+                        <h3>{{ producto.nombre }}</h3>
+                        <p style="color: #666; font-size: 0.9rem;">{{ producto.descripcion[:50] }}...</p>
+                        <p style="margin: 10px 0;">
+                            <strong>Precio:</strong> ${{ "%.2f"|format(producto.precio) }}
+                            <strong style="margin-left: 15px;">Costo:</strong> ${{ "%.2f"|format(producto.costo) }}
+                        </p>
+                        <p>
+                            <strong>Stock:</strong> {{ producto.stock }}
+                            <span class="stock-badge {% if producto.stock > 20 %}stock-ok{% elif producto.stock > 0 %}stock-low{% else %}stock-out{% endif %}">
+                                {% if producto.stock > 20 %}Disponible
+                                {% elif producto.stock > 0 %}Bajo
+                                {% else %}Agotado{% endif %}
+                            </span>
+                        </p>
+                        <p style="margin-top: 10px;">
+                            <strong>Estado:</strong>
+                            {% if producto.activo %}
+                                <span style="color: var(--verde);">? Activo</span>
+                            {% else %}
+                                <span style="color: var(--rojo);">? Inactivo</span>
+                            {% endif %}
+                        </p>
+                        <div class="producto-actions">
+                            <a href="/admin/producto/{{ producto.id }}/editar" class="btn btn-primary">Editar</a>
+                            <a href="/admin/producto/{{ producto.id }}/toggle" class="btn btn-warning">
+                                {% if producto.activo %}Desactivar{% else %}Activar{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>
