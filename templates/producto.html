@@ -34,7 +34,7 @@
             {% if producto.stock > 0 %}
             <button class="btn" onclick="abrirFormularioPedido()">Hacer Pedido</button>
             {% endif %}
-            <a href="/catalogo" class="btn" style="background: var(--gris); margin-left: 10px;">Volver al Catálogo</a>
+            <a href="/catalogo" class="btn" style="background: var(--gris); margin-left: 10px;">Volver al Catï¿½logo</a>
         </div>
     </div>
 </div>
@@ -65,7 +65,7 @@
                 <label>Horario de Entrega</label>
                 <select id="horario_entrega" name="horario_entrega" required>
                     <option value="">Seleccione un horario</option>
-                    <option value="mañana">Mañana (8:00 - 12:00)</option>
+                    <option value="maï¿½ana">Maï¿½ana (8:00 - 12:00)</option>
                     <option value="tarde">Tarde (13:00 - 17:00)</option>
                     <option value="noche">Noche (18:00 - 21:00)</option>
                 </select>
@@ -77,12 +77,12 @@
             </div>
 
             <div class="form-group">
-                <label>Teléfono</label>
+                <label>Telï¿½fono</label>
                 <input type="tel" id="cliente_telefono" name="cliente_telefono" pattern="[0-9+\-\s]+" required>
             </div>
 
             <div class="form-group">
-                <label>Dirección de Entrega</label>
+                <label>Direcciï¿½n de Entrega</label>
                 <input type="text" id="cliente_direccion" name="cliente_direccion" required>
             </div>
 
@@ -104,14 +104,14 @@
 </div>
 
 <script>
-    const precioUnitario = {{ producto.precio }};
+    const precioUnitario = { producto,precio };
     
-    // Establecer fecha mínima
+    // Establecer fecha mÃ­nima
     document.addEventListener('DOMContentLoaded', function() {
         const fechaInput = document.getElementById('fecha_entrega');
-        const mañana = new Date();
-        mañana.setDate(mañana.getDate() + 1);
-        fechaInput.min = mañana.toISOString().split('T')[0];
+        const maÃ±ana = new Date();
+        maÃ±ana.setDate(maÃ±ana.getDate() + 1);
+        fechaInput.min = maÃ±ana.toISOString().split('T')[0];
     });
 
     function abrirFormularioPedido() {
@@ -150,7 +150,7 @@
             const result = await response.json();
             
             if (result.success) {
-                alert('¡Pedido enviado exitosamente! Nos pondremos en contacto contigo pronto.');
+                alert('ï¿½Pedido enviado exitosamente! Nos pondremos en contacto contigo pronto.');
                 window.location.href = '/';
             } else {
                 alert('Error: ' + (result.error || 'Intente nuevamente'));

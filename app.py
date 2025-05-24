@@ -11,7 +11,7 @@ from functools import wraps
 
 app = Flask(__name__)
 
-# ConfiguraciÛn para Railway
+# Configuraci√≥n para Railway
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'chocolates-byb-2024-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///chocolates.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -23,9 +23,9 @@ if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
 
 db = SQLAlchemy(app)
 
-# ConfiguraciÛn WhatsApp desde variables de entorno
-WHATSAPP_PHONE = os.environ.get('WHATSAPP_PHONE', '+5355059350')
-WHATSAPP_APIKEY = os.environ.get('WHATSAPP_APIKEY', '5195222')
+# Configuraci√≥n WhatsApp desde variables de entorno
+WHATSAPP_PHONE = os.environ.get('WHATSAPP_PHONE', '+53512345678')
+WHATSAPP_APIKEY = os.environ.get('WHATSAPP_APIKEY', 'xxxxxx')
 
 # Crear carpeta de uploads si no existe
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -49,7 +49,7 @@ class Pedido(db.Model):
     producto = db.relationship('Producto', backref='pedidos')
     cantidad = db.Column(db.Integer, default=1)
     fecha_entrega = db.Column(db.Date)
-    horario_entrega = db.Column(db.String(20))  # maÒana, tarde, noche
+    horario_entrega = db.Column(db.String(20))  # ma√±ana, tarde, noche
     cliente_nombre = db.Column(db.String(100))
     cliente_telefono = db.Column(db.String(20))
     cliente_direccion = db.Column(db.Text)
@@ -74,11 +74,11 @@ def login_required(f):
     return decorated_function
 
 def enviar_whatsapp(mensaje):
-    """EnvÌa mensaje por WhatsApp usando CallMeBot API"""
+    """Env√≠a mensaje por WhatsApp usando CallMeBot API"""
     try:
         # Solo enviar si tenemos las credenciales configuradas
-        if WHATSAPP_APIKEY == 'xxxxxx':
-            print("WhatsApp no configurado. Mensaje que se enviarÌa:")
+        if WHATSAPP_APIKEY == 'xxxxxxx':
+            print("WhatsApp no configurado. Mensaje que se enviar√≠a:")
             print(mensaje)
             return True
             
@@ -95,7 +95,7 @@ def enviar_whatsapp(mensaje):
         return False
 
 def calcular_estadisticas():
-    """Calcula estadÌsticas para el dashboard"""
+    """Calcula estad√≠sticas para el dashboard"""
     hoy = datetime.now().date()
     inicio_mes = datetime(hoy.year, hoy.month, 1).date()
     
@@ -115,7 +115,7 @@ def calcular_estadisticas():
         Pedido.estado == 'entregado'
     ).scalar() or 0
     
-    # Producto m·s vendido
+    # Producto m√°s vendido
     producto_top = db.session.query(
         Producto.nombre,
         db.func.sum(Pedido.cantidad).label('total')
@@ -146,8 +146,8 @@ with app.app_context():
     if Producto.query.count() == 0:
         productos_ejemplo = [
             Producto(
-                nombre="BombÛn Cl·sico",
-                descripcion="Delicioso bombÛn de chocolate oscuro 70% cacao",
+                nombre="Bomb√≥n Cl√°sico",
+                descripcion="Delicioso bomb√≥n de chocolate oscuro 70% cacao",
                 tipo="oscuro",
                 precio=2.50,
                 costo=1.50,
@@ -170,8 +170,8 @@ with app.app_context():
                 stock=25
             ),
             Producto(
-                nombre="BombÛn de CafÈ",
-                descripcion="Chocolate amargo con centro de cafÈ cubano",
+                nombre="Bomb√≥n de Caf√©",
+                descripcion="Chocolate amargo con centro de caf√© cubano",
                 tipo="oscuro",
                 precio=3.50,
                 costo=2.00,
@@ -199,7 +199,7 @@ with app.app_context():
         db.session.commit()
         print("Productos de ejemplo creados")
 
-# ============= RUTAS P⁄BLICAS =============
+# ============= RUTAS P√öBLICAS =============
 @app.route('/')
 def index():
     productos_destacados = Producto.query.filter_by(activo=True).limit(6).all()
@@ -253,22 +253,22 @@ def crear_pedido():
         db.session.commit()
         
         # Enviar WhatsApp
-        mensaje = f"""?? NUEVO PEDIDO - Chocolates ByB
+        mensaje = f"""üì¶ NUEVO PEDIDO - Chocolates ByB
 
-?? Producto: {producto.nombre}
-?? Cantidad: {data['cantidad']}
-?? Fecha de entrega: {data['fecha_entrega']}
-?? Horario: {data['horario_entrega']}
+üç´ Producto: {producto.nombre}
+üìä Cantidad: {data['cantidad']}
+üóì Fecha de entrega: {data['fecha_entrega']}
+üïí Horario: {data['horario_entrega']}
 
-?? Cliente: {data['cliente_nombre']}
-?? DirecciÛn: {data['cliente_direccion']}
-?? TelÈfono: {data['cliente_telefono']}
-?? Nota: {data.get('nota', 'Sin notas')}
+üë§ Cliente: {data['cliente_nombre']}
+üìç Direcci√≥n: {data['cliente_direccion']}
+üìû Tel√©fono: {data['cliente_telefono']}
+‚úçÔ∏è Nota: {data.get('nota', 'Sin notas')}
 
-?? Total: ${total:.2f}
-?? Ganancia: ${ganancia:.2f}
+üí∞ Total: ${total:.2f}
+üìà Ganancia: ${ganancia:.2f}
 
-? Pedido #{pedido.id} registrado."""
+‚úÖ Pedido #{pedido.id} registrado."""
         
         enviar_whatsapp(mensaje)
         
@@ -281,7 +281,7 @@ def crear_pedido():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# ============= RUTAS DE ADMINISTRACI”N =============
+# ============= RUTAS DE ADMINISTRACI√ìN =============
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -293,7 +293,7 @@ def login():
             session['user_id'] = usuario.id
             return redirect(url_for('admin_dashboard'))
         else:
-            return render_template('login.html', error='Credenciales inv·lidas')
+            return render_template('login.html', error='Credenciales inv√°lidas')
     
     return render_template('login.html')
 
@@ -408,7 +408,7 @@ def exportar_pedidos():
 def health():
     return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
 
-# ============= EJECUTAR APLICACI”N =============
+# ============= EJECUTAR APLICACI√ìN =============
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)

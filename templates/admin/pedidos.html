@@ -4,7 +4,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Gestión de Pedidos - Chocolates ByB</title>
+    <title>Gestiï¿½n de Pedidos - Chocolates ByB</title>
     <style>
         /* Reutilizar estilos del dashboard */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -60,7 +60,7 @@
 
         <main class="main-content">
             <div class="header">
-                <h1>Gestión de Pedidos</h1>
+                <h1>GestiÃ³n de Pedidos</h1>
             </div>
 
             <div class="filters">
@@ -84,7 +84,7 @@
                             <th>ID</th>
                             <th>Fecha Pedido</th>
                             <th>Cliente</th>
-                            <th>Teléfono</th>
+                            <th>Telï¿½fono</th>
                             <th>Producto</th>
                             <th>Cantidad</th>
                             <th>Fecha Entrega</th>
@@ -114,12 +114,12 @@
                             <td>
                                 <div class="btn-group">
                                     {% if pedido.estado == 'pendiente' %}
-                                    <button class="btn-sm btn-primary" onclick="cambiarEstado({{ pedido.id }}, 'confirmado')">
+                                    <button class="btn-sm btn-primary" onclick="cambiarEstado({ pedido,id }, 'confirmado')">
                                         ?
                                     </button>
                                     {% endif %}
                                     {% if pedido.estado == 'confirmado' %}
-                                    <button class="btn-sm btn-success" onclick="cambiarEstado({{ pedido.id }}, 'entregado')">
+                                    <button class="btn-sm btn-success" onclick="cambiarEstado({ pedido,id }, 'entregado')">
                                         ??
                                     </button>
                                     {% endif %}
@@ -135,7 +135,7 @@
 
     <script>
         async function cambiarEstado(pedidoId, nuevoEstado) {
-            if (confirm('¿Cambiar el estado del pedido?')) {
+            if (confirm('ï¿½Cambiar el estado del pedido?')) {
                 try {
                     const response = await fetch(`/admin/pedido/${pedidoId}/estado`, {
                         method: 'POST',
