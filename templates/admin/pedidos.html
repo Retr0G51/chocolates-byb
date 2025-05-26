@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pedidos - Chocolates ByB</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --chocolate: #6B4423; --chocolate-dark: #4A2C17; --dorado: #D4AF37; --verde: #28a745; --azul: #007bff; }
+        body { font-family: 'Arial', sans-serif; background: #f4f4f4; color: #333; }
+        .admin-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: var(--chocolate-dark); color: white; padding: 20px 0; }
+        .sidebar h2 { color: var(--dorado); padding: 0 20px 20px; }
+        .sidebar-menu { list-style: none; margin-top: 20px; }
+        .sidebar-menu a { display: block; color: white; text-decoration: none; padding: 15px 20px; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: var(--chocolate); border-left: 3px solid var(--dorado); }
+        .main-content { flex: 1; padding: 20px; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .filters { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .data-table { background: white; border-radius: 10px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; }
+        .badge { padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; }
+        .badge-pendiente { background: #ffc107; color: #333; }
+        .badge-confirmado { background: #17a2b8; color: white; }
+        .badge-entregado { background: var(--verde); color: white; }
+        .btn-sm { padding: 5px 10px; font-size: 0.85rem; border-radius: 5px; border: none; cursor: pointer; color: white; }
+        .btn-primary { background: var(--azul); }
+        .btn-success { background: var(--verde); }
+        select { padding: 8px 15px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul class="sidebar-menu">
+                <li><a href="/admin">Dashboard</a></li>
+                <li><a href="/admin/pedidos" class="active">Pedidos</a></li>
+                <li><a href="/admin/productos">Productos</a></li>
+                <li><a href="/" target="_blank">Ver Tienda</a></li>
+                <li><a href="/logout">Salir</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1>Gestion de Pedidos</h1>
+            </div>
+
+            <div class="filters">
+                <label>Filtrar por estado:</label>
+                <select onchange="window.location.href='/admin/pedidos?estado=' + this.value">
+                    <option value="todos" {% if estado_actual == 'todos' %}selected{% endif %}>Todos</option>
+                    <option value="pendiente" {% if estado_actual == 'pendiente' %}selected{% endif %}>Pendientes</option>
+                    <option value="confirmado" {% if estado_actual == 'confirmado' %}selected{% endif %}>Confirmados</option>
+                    <option value="entregado" {% if estado_actual == 'entregado' %}selected{% endif %}>Entregados</option>
+                </select>
+                
+                <a href="/admin/exportar-pedidos" class="btn-sm btn-primary" style="float: right;">Exportar Excel</a>
+            </div>
+
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Cliente</th>
+                            <th>Telefono</th>
+                            <th>Producto</th>
+                            <th>Cant.</th>
+                            <th>Entrega</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in pedidos %}
+                        <tr>
+                            <td>#{{ pedido.id }}</td>
+                            <td>{{ pedido.creado_en.strftime('%d/%m %H:%M') }}</td>
+                            <td>{{ pedido.cliente_nombre }}</td>
+                            <td>{{ pedido.cliente_telefono }}</td>
+                            <td>{{ pedido.producto.nombre if pedido.producto else 'N/A' }}</td>
+                            <td>{{ pedido.cantidad }}</td>
+                            <td>{{ pedido.fecha_entrega.strftime('%d/%m') }}</td>
+                            <td>${{ "%.2f"|format(pedido.total) }}</td>
+                            <td><span class="badge badge-{{ pedido.estado }}">{{ pedido.estado|capitalize }}</span></td>
+                            <td>
+                                {% if pedido.estado == 'pendiente' %}
+                                <button class="btn-sm btn-primary" onclick="cambiarEstado({{ pedido.id }}, 'confirmado')">Confirmar</button>
+                                {% endif %}
+                                {% if pedido.estado == 'confirmado' %}
+                                <button class="btn-sm btn-success" onclick="cambiarEstado({{ pedido.id }}, 'entregado')">Entregado</button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function cambiarEstado(pedidoId, nuevoEstado) {
+            if (confirm('Cambiar el estado del pedido?')) {
+                try {
+                    const response = await fetch(`/admin/pedido/${pedidoId}/estado`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ estado: nuevoEstado })
+                    });
+                    
+                    if (response.ok) {
+                        location.reload();
+                    }
+                } catch (error) {
+                    alert('Error al cambiar el estado');
+                }
+            }
+        }
+    </script>
+</body>
+                              </html>
