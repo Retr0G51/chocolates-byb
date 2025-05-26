@@ -186,28 +186,32 @@ def ver_producto(id):
 def crear_pedido():
     try:
         data = request.json
-        producto = Producto.query.get(data['producto_id'])
-        
-        if not producto or producto.stock < data['cantidad']:
-            return jsonify({'error': 'Producto no disponible'}), 400
-        
-        total = producto.precio * data['cantidad']
-        ganancia = (producto.precio - producto.costo) * data['cantidad']
-        
-        pedido = Pedido(
-            producto_id=data['producto_id'],
-            cantidad=data['cantidad'],
-            fecha_entrega=datetime.strptime(data['fecha_entrega'], '%Y-%m-%d').date(),
-            horario_entrega=data['horario_entrega'],
-            cliente_nombre=data['cliente_nombre'],
-            cliente_telefono=data['cliente_telefono'],
-            cliente_direccion=data['cliente_direccion'],
-            nota=data.get('nota', ''),
-            total=total,
-            ganancia=ganancia
-        )
-        
-        producto.stock -= data['cantidad']
+    
+    producto_id = int(data['producto_id'])
+cantidad = int(data['cantidad'])
+
+producto = Producto.query.get(producto_id)
+
+if not producto or producto.stock < cantidad:
+    return jsonify({'error': 'Producto no disponible'}), 400
+
+total = producto.precio * cantidad
+ganancia = (producto.precio - producto.costo) * cantidad
+
+pedido = Pedido(
+    producto_id=producto_id,
+    cantidad=cantidad,
+    fecha_entrega=datetime.strptime(data['fecha_entrega'], '%Y-%m-%d').date(),
+    horario_entrega=data['horario_entrega'],
+    cliente_nombre=data['cliente_nombre'],
+    cliente_telefono=data['cliente_telefono'],
+    cliente_direccion=data['cliente_direccion'],
+    nota=data.get('nota', ''),
+    total=total,
+    ganancia=ganancia
+)
+
+producto.stock -= cantidad
         
         db.session.add(pedido)
         db.session.commit()
