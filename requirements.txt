@@ -1,0 +1,5 @@
+echo "Flask==2.3.2" > requirements.txt
+echo "Flask-SQLAlchemy==3.0.5" >> requirements.txt
+echo "requests==2.31.0" >> requirements.txt
+echo "Werkzeug==2.3.6" >> requirements.txt
+echo "gunicorn==21.2.0" >> requirements.txt
