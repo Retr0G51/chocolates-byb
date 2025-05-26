@@ -103,7 +103,7 @@
 </div>
 
 <script>
-    const precioUnitario = {{ producto.precio }};
+    const precioUnitario = {{ producto.precio|tojson }};
     
     document.addEventListener('DOMContentLoaded', function() {
         const fechaInput = document.getElementById('fecha_entrega');
