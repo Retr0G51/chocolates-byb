@@ -186,17 +186,25 @@ def ver_producto(id):
 def crear_pedido():
     try:
         data = request.json
-        producto = Producto.query.get(data['producto_id'])
         
-        if not producto or producto.stock < data['cantidad']:
-            return jsonify({'error': 'Producto no disponible'}), 400
+        # Convertir valores a los tipos correctos
+        producto_id = int(data['producto_id'])
+        cantidad = int(data['cantidad'])
         
-        total = producto.precio * data['cantidad']
-        ganancia = (producto.precio - producto.costo) * data['cantidad']
+        producto = Producto.query.get(producto_id)
+        
+        if not producto:
+            return jsonify({'error': 'Producto no encontrado'}), 400
+            
+        if producto.stock < cantidad:
+            return jsonify({'error': 'Stock insuficiente'}), 400
+        
+        total = float(producto.precio * cantidad)
+        ganancia = float((producto.precio - producto.costo) * cantidad)
         
         pedido = Pedido(
-            producto_id=data['producto_id'],
-            cantidad=data['cantidad'],
+            producto_id=producto_id,
+            cantidad=cantidad,
             fecha_entrega=datetime.strptime(data['fecha_entrega'], '%Y-%m-%d').date(),
             horario_entrega=data['horario_entrega'],
             cliente_nombre=data['cliente_nombre'],
@@ -207,14 +215,14 @@ def crear_pedido():
             ganancia=ganancia
         )
         
-        producto.stock -= data['cantidad']
+        producto.stock -= cantidad
         
         db.session.add(pedido)
         db.session.commit()
         
         mensaje = f"""NUEVO PEDIDO - Chocolates ByB
 Producto: {producto.nombre}
-Cantidad: {data['cantidad']}
+Cantidad: {cantidad}
 Fecha: {data['fecha_entrega']}
 Cliente: {data['cliente_nombre']}
 Direccion: {data['cliente_direccion']}
@@ -228,6 +236,8 @@ Total: ${total:.2f}"""
             'mensaje': 'Pedido creado exitosamente'
         })
         
+    except ValueError as e:
+        return jsonify({'error': 'Datos invalidos en el formulario'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
