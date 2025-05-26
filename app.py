@@ -24,8 +24,8 @@ if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
 db = SQLAlchemy(app)
 
 # WhatsApp Configuration
-WHATSAPP_PHONE = os.environ.get('WHATSAPP_PHONE', '+53512345678')
-WHATSAPP_APIKEY = os.environ.get('WHATSAPP_APIKEY', 'xxxxxx')
+WHATSAPP_PHONE = os.environ.get('WHATSAPP_PHONE', '+5355059350')
+WHATSAPP_APIKEY = os.environ.get('WHATSAPP_APIKEY', '5195222')
 
 # Create upload folder if not exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
