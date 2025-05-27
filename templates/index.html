@@ -7,17 +7,22 @@
     .productos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; padding: 3rem 0; }
     .producto-card { background: var(--blanco); border-radius: 15px; overflow: hidden; box-shadow: 0 3px 15px rgba(0,0,0,0.1); transition: transform 0.3s; }
     .producto-card:hover { transform: translateY(-5px); box-shadow: 0 5px 25px rgba(0,0,0,0.15); }
-    .producto-img { width: 100%; height: 200px; background: linear-gradient(45deg, var(--chocolate), var(--chocolate-dark)); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: var(--dorado); }
-    .producto-info { padding: 1.5rem; }
+    .producto-img { width: 100%; height: 200px; background: linear-gradient(45deg, var(--chocolate), var(--chocolate-dark)); display: flex; align-items: center; justify-content: center; font-size: 4rem; color: var(--dorado); overflow: hidden; }
+    .producto-img img { width: 100%; height: 100%; object-fit: cover; }
+    .producto-info { padding: 1.5rem; text-align: center; }
     .producto-info h3 { color: var(--chocolate); margin-bottom: 0.5rem; }
     .producto-precio { font-size: 1.5rem; color: var(--dorado); font-weight: bold; margin: 1rem 0; }
+    @media (max-width: 768px) {
+        .hero h1 { font-size: 2rem; }
+        .productos-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+    }
 </style>
 
 <section class="hero">
     <div class="container">
-        <h1>Chocolates Artesanales</h1>
+        <h1>🍫 Chocolates Artesanales 🍫</h1>
         <p>Hechos con amor y los mejores ingredientes</p>
-        <a href="/catalogo" class="btn">Ver Catalogo</a>
+        <a href="/catalogo" class="btn">Ver Catálogo Completo</a>
     </div>
 </section>
 
@@ -27,13 +32,17 @@
         {% for producto in productos %}
         <div class="producto-card">
             <div class="producto-img">
-                {% if producto.tipo == 'blanco' %}🤍{% else %}🍫{% endif %}
+                {% if producto.imagen %}
+                <img src="/static/uploads/{{ producto.imagen }}" alt="{{ producto.nombre }}">
+                {% else %}
+                    {% if producto.tipo == 'blanco' %}🤍{% else %}🍫{% endif %}
+                {% endif %}
             </div>
             <div class="producto-info">
                 <h3>{{ producto.nombre }}</h3>
-                <p>{{ producto.descripcion }}</p>
-                <p class="producto-precio">${{ "%.2f"|format(producto.precio) }}</p>
-                <a href="/producto/{{ producto.id }}" class="btn">Ver Detalles</a>
+                <p>{{ producto.peso }}</p>
+                <p class="producto-precio">{{ producto.precio|int }} CUP</p>
+                <a href="/catalogo" class="btn">Hacer Pedido</a>
             </div>
         </div>
         {% endfor %}
