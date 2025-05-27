@@ -99,8 +99,16 @@
                             <td>{{ pedido.fecha_pedido.strftime('%d/%m %H:%M') }}</td>
                             <td>{{ pedido.cliente_nombre }}</td>
                             <td>{{ pedido.cliente_telefono }}</td>
-                            <td>{{ pedido.producto.nombre if pedido.producto else 'N/A' }}</td>
-                            <td>{{ pedido.cantidad }}</td>
+                            <td>
+                              {% for item in pedido.items %}
+                                {{ item.producto.nombre if item.producto else 'N/A' }}{% if not loop.last %}, {% endif %}
+                              {% endfor %}
+                            </td>
+                            <td>
+                              {% for item in pedido.items %}
+                                {{ item.cantidad }}{% if not loop.last %}, {% endif %}
+                              {% endfor %}
+                            </td>
                             <td>{{ pedido.fecha_entrega.strftime('%d/%m') }}</td>
                             <td>${{ "%.2f"|format(pedido.total) }}</td>
                             <td><span class="badge badge-{{ pedido.estado }}">{{ pedido.estado|capitalize }}</span></td>
