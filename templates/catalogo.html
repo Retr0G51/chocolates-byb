@@ -1,117 +1,520 @@
 {% extends "base.html" %}
 {% block content %}
 <style>
-    .filtros { 
-        text-align: center; 
-        margin: 2rem 0;
+    .catalogo-header {
+        text-align: center;
+        padding: 2rem 0;
+        background: var(--chocolate);
+        color: var(--blanco);
+        margin-bottom: 2rem;
+    }
+    
+    .catalogo-header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .tipo-section {
+        margin-bottom: 3rem;
+    }
+    
+    .tipo-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        font-size: 1.8rem;
+        color: var(--chocolate);
+    }
+    
+    .productos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
         padding: 0 1rem;
     }
     
-    .filtros .btn { 
-        margin: 0.25rem;
-        font-size: 0.9rem;
-        padding: 0.6rem 1.2rem;
+    .producto-card {
+        background: var(--blanco);
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s;
+        text-align: center;
     }
     
-    .productos-grid { 
-        display: grid; 
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-        gap: 1.5rem; 
-        padding: 2rem 1rem; 
+    .producto-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 25px rgba(0,0,0,0.15);
     }
     
-    .producto-card { 
-        background: var(--blanco); 
-        border-radius: 15px; 
-        overflow: hidden; 
-        box-shadow: 0 3px 15px rgba(0,0,0,0.1); 
-        transition: transform 0.3s; 
+    .producto-img {
+        width: 100%;
+        height: 200px;
+        background: linear-gradient(45deg, var(--chocolate), var(--chocolate-dark));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 4rem;
     }
     
-    .producto-card:hover { 
-        transform: translateY(-5px); 
-        box-shadow: 0 5px 25px rgba(0,0,0,0.15); 
+    .producto-info {
+        padding: 1.5rem;
     }
     
-    .producto-img { 
-        width: 100%; 
-        height: 200px; 
-        background: linear-gradient(45deg, var(--chocolate), var(--chocolate-dark)); 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        font-size: 4rem; 
-        color: var(--dorado); 
-    }
-    
-    .producto-info { 
-        padding: 1.5rem; 
-    }
-    
-    .producto-info h3 { 
-        color: var(--chocolate); 
+    .producto-info h3 {
+        color: var(--chocolate);
         margin-bottom: 0.5rem;
-        font-size: 1.2rem;
+        font-size: 1.3rem;
     }
     
-    .producto-info p {
+    .producto-peso {
+        color: var(--gris);
         font-size: 0.9rem;
         margin-bottom: 0.5rem;
     }
     
-    .producto-precio { 
-        font-size: 1.5rem; 
-        color: var(--dorado); 
-        font-weight: bold; 
-        margin: 1rem 0; 
+    .producto-precio {
+        font-size: 1.8rem;
+        color: var(--dorado);
+        font-weight: bold;
+        margin: 1rem 0;
     }
     
-    @media (max-width: 480px) {
-        .filtros .btn {
-            font-size: 0.8rem;
-            padding: 0.5rem 1rem;
+    .stock-info {
+        font-size: 0.9rem;
+        color: #28a745;
+        margin-bottom: 1rem;
+    }
+    
+    .stock-bajo {
+        color: #ffc107;
+    }
+    
+    .stock-agotado {
+        color: #dc3545;
+    }
+    
+    @media (max-width: 768px) {
+        .catalogo-header h1 {
+            font-size: 2rem;
+        }
+        
+        .tipo-header {
+            font-size: 1.5rem;
         }
         
         .productos-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 1rem;
         }
         
-        .producto-info h3 {
-            font-size: 1.1rem;
+        .producto-card {
+            font-size: 0.9rem;
         }
         
         .producto-precio {
-            font-size: 1.3rem;
+            font-size: 1.5rem;
         }
     }
 </style>
 
-<section class="container">
-    <h1 style="text-align: center; color: var(--chocolate); margin: 2rem 0;">Catalogo de Productos</h1>
-    
-    <div class="filtros">
-        <a href="/catalogo?tipo=todos" class="btn {% if tipo_actual == 'todos' %}active{% endif %}">Todos</a>
-        <a href="/catalogo?tipo=oscuro" class="btn {% if tipo_actual == 'oscuro' %}active{% endif %}">Chocolate Oscuro</a>
-        <a href="/catalogo?tipo=blanco" class="btn {% if tipo_actual == 'blanco' %}active{% endif %}">Chocolate Blanco</a>
-        <a href="/catalogo?tipo=con_leche" class="btn {% if tipo_actual == 'con_leche' %}active{% endif %}">Con Leche</a>
+<div class="catalogo-header">
+    <div class="container">
+        <h1>🍫 Nuestros Chocolates Artesanales 🍫</h1>
+        <p>Hechos con amor y los mejores ingredientes</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="text-center" style="margin-bottom: 3rem;">
+        <h2 style="color: var(--chocolate); margin-bottom: 1rem;">¿Cómo hacer tu pedido?</h2>
+        <p>1️⃣ Selecciona el tipo y tamaño de chocolate que deseas</p>
+        <p>2️⃣ Agrega al carrito la cantidad deseada</p>
+        <p>3️⃣ Completa el formulario con tus datos de entrega</p>
+        <p>4️⃣ ¡Listo! Te contactaremos por WhatsApp para confirmar</p>
     </div>
 
-    <div class="productos-grid">
-        {% for producto in productos %}
-        <div class="producto-card">
-            <div class="producto-img">
-                {% if producto.tipo == 'blanco' %}🤍{% else %}🍫{% endif %}
-            </div>
-            <div class="producto-info">
-                <h3>{{ producto.nombre }}</h3>
-                <p>{{ producto.descripcion }}</p>
-                <p class="producto-precio">${{ "%.2f"|format(producto.precio) }}</p>
-                <p style="color: #666;">Stock: {{ producto.stock }} unidades</p>
-                <a href="/producto/{{ producto.id }}" class="btn">Ver Detalles</a>
-            </div>
+    <!-- Chocolate Blanco -->
+    <div class="tipo-section">
+        <div class="tipo-header">
+            <span>🍆 CHOCOLATE BLANCO ⚪</span>
         </div>
-        {% endfor %}
+        <div class="productos-grid">
+            {% for producto in productos if producto.tipo == 'blanco' %}
+            <div class="producto-card">
+                <div class="producto-img">
+                    {% if producto.imagen %}
+                    <img src="/static/uploads/{{ producto.imagen }}" alt="{{ producto.nombre }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    🤍
+                    {% endif %}
+                </div>
+                <div class="producto-info">
+                    <h3>{{ producto.tamano|title }}</h3>
+                    <p class="producto-peso">{{ producto.peso }}</p>
+                    <p class="producto-precio">{{ producto.precio|int }} CUP</p>
+                    <p class="stock-info {% if producto.stock < 10 %}stock-bajo{% elif producto.stock == 0 %}stock-agotado{% endif %}">
+                        {% if producto.stock > 0 %}
+                            Stock: {{ producto.stock }}
+                        {% else %}
+                            Agotado
+                        {% endif %}
+                    </p>
+                    <button class="btn btn-sm" onclick="agregarAlCarrito({{ producto.id }}, '{{ producto.nombre }}', {{ producto.precio }})">
+                        Agregar al pedido
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
     </div>
-</section>
+
+    <!-- Chocolate con Leche -->
+    <div class="tipo-section">
+        <div class="tipo-header">
+            <span>🍆 CHOCOLATE CON LECHE 🟤</span>
+        </div>
+        <div class="productos-grid">
+            {% for producto in productos if producto.tipo == 'con_leche' %}
+            <div class="producto-card">
+                <div class="producto-img">
+                    {% if producto.imagen %}
+                    <img src="/static/uploads/{{ producto.imagen }}" alt="{{ producto.nombre }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    🤎
+                    {% endif %}
+                </div>
+                <div class="producto-info">
+                    <h3>{{ producto.tamano|title }}</h3>
+                    <p class="producto-peso">{{ producto.peso }}</p>
+                    <p class="producto-precio">{{ producto.precio|int }} CUP</p>
+                    <p class="stock-info {% if producto.stock < 10 %}stock-bajo{% elif producto.stock == 0 %}stock-agotado{% endif %}">
+                        {% if producto.stock > 0 %}
+                            Stock: {{ producto.stock }}
+                        {% else %}
+                            Agotado
+                        {% endif %}
+                    </p>
+                    <button class="btn btn-sm" onclick="agregarAlCarrito({{ producto.id }}, '{{ producto.nombre }}', {{ producto.precio }})">
+                        Agregar al pedido
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Carrito flotante -->
+    <div id="carritoFlotante" style="position: fixed; bottom: 20px; right: 20px; background: var(--chocolate); color: white; padding: 1rem; border-radius: 50%; cursor: pointer; display: none; box-shadow: 0 3px 10px rgba(0,0,0,0.3);">
+        <span style="font-size: 1.5rem;">🛒</span>
+        <span id="carritoCount" style="position: absolute; top: -5px; right: -5px; background: var(--dorado); color: var(--chocolate); border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: bold;">0</span>
+    </div>
+</div>
+
+<!-- Modal de Pedido -->
+<div id="modalPedido" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; overflow-y: auto;">
+    <div class="modal-content" style="background: var(--blanco); max-width: 600px; margin: 20px auto; padding: 2rem; border-radius: 15px; max-height: 90vh; overflow-y: auto;">
+        <h2 style="color: var(--chocolate); margin-bottom: 1.5rem;">🍫 Realizar Pedido</h2>
+        
+        <!-- Resumen del carrito -->
+        <div id="resumenCarrito" style="background: var(--crema); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+            <h3>Tu pedido:</h3>
+            <div id="itemsCarrito"></div>
+            <hr>
+            <p><strong>Subtotal: <span id="subtotalCarrito">0</span> CUP</strong></p>
+        </div>
+        
+        <form id="formPedido" onsubmit="enviarPedido(event)">
+            <div class="form-group">
+                <label>Fecha de Entrega</label>
+                <input type="date" id="fecha_entrega" name="fecha_entrega" required>
+            </div>
+
+            <div class="form-group">
+                <label>Horario de Entrega</label>
+                <select id="horario_entrega" name="horario_entrega" required>
+                    <option value="">Seleccione un horario</option>
+                    <option value="manana">Mañana (8:30 - 11:30 AM)</option>
+                    <option value="tarde">Tarde (2:00 - 5:00 PM)</option>
+                    <option value="noche">Noche (6:00 - 9:00 PM)</option>
+                </select>
+            </div>
+
+            <h3 style="color: var(--chocolate); margin: 1.5rem 0 1rem;">Datos del Cliente</h3>
+            
+            <div class="form-group">
+                <label>Nombre Completo</label>
+                <input type="text" id="cliente_nombre" name="cliente_nombre" required>
+            </div>
+
+            <div class="form-group">
+                <label>Teléfono</label>
+                <input type="tel" id="cliente_telefono" name="cliente_telefono" pattern="[+0-9\s\-]+" required placeholder="+53 5 1234567">
+            </div>
+
+            <h3 style="color: var(--chocolate); margin: 1.5rem 0 1rem;">Dirección de Entrega</h3>
+            
+            <div class="form-group">
+                <label>Calle, número y entrecalles</label>
+                <input type="text" id="cliente_direccion_calle" name="cliente_direccion_calle" required placeholder="Ej: Calle 23 #456 entre 10 y 12">
+            </div>
+
+            <div class="form-group">
+                <label>Municipio</label>
+                <select id="cliente_municipio" name="cliente_municipio" required onchange="cargarRepartos()">
+                    <option value="">Seleccione municipio</option>
+                    <option value="Guanabacoa">Guanabacoa</option>
+                    <option value="San Miguel">San Miguel</option>
+                    <option value="Marianao">Marianao</option>
+                    <option value="Playa">Playa</option>
+                    <option value="La Lisa">La Lisa</option>
+                    <option value="Plaza">Plaza</option>
+                    <option value="Centro Habana">Centro Habana</option>
+                    <option value="Habana Vieja">Habana Vieja</option>
+                    <option value="Boyeros">Boyeros</option>
+                    <option value="Cerro">Cerro</option>
+                    <option value="10 de Octubre">10 de Octubre</option>
+                    <option value="Arroyo Naranjo">Arroyo Naranjo</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Reparto</label>
+                <select id="cliente_reparto" name="cliente_reparto" required onchange="actualizarTotal()">
+                    <option value="">Primero seleccione un municipio</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Observaciones (Opcional)</label>
+                <textarea id="observaciones" name="observaciones" rows="3" placeholder="Ej: Es un regalo, tocar el timbre suave"></textarea>
+            </div>
+
+            <div style="background: var(--crema); padding: 1rem; border-radius: 8px; margin: 1.5rem 0;">
+                <p>Subtotal: <span id="modalSubtotal">0</span> CUP</p>
+                <p>Mensajería: <span id="precioMensajeria">0</span> CUP</p>
+                <p style="font-size: 1.3rem; color: var(--chocolate); font-weight: bold;">
+                    Total: <span id="totalPedido" style="color: var(--dorado);">0</span> CUP
+                </p>
+            </div>
+
+            <button type="submit" class="btn" style="width: 100%;">Enviar Pedido</button>
+            <button type="button" class="btn" style="width: 100%; margin-top: 10px; background: var(--gris);" onclick="cerrarModal()">Cancelar</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Carrito de compras
+    let carrito = [];
+    let precioMensajeriaActual = 0;
+
+    // Fecha mínima (mañana)
+    document.addEventListener('DOMContentLoaded', function() {
+        const fechaInput = document.getElementById('fecha_entrega');
+        const manana = new Date();
+        manana.setDate(manana.getDate() + 1);
+        fechaInput.min = manana.toISOString().split('T')[0];
+    });
+
+    function agregarAlCarrito(id, nombre, precio) {
+        const itemExistente = carrito.find(item => item.id === id);
+        
+        if (itemExistente) {
+            itemExistente.cantidad++;
+        } else {
+            carrito.push({
+                id: id,
+                nombre: nombre,
+                precio: precio,
+                cantidad: 1
+            });
+        }
+        
+        actualizarCarritoUI();
+        mostrarNotificacion('Producto agregado al carrito');
+    }
+
+    function actualizarCarritoUI() {
+        const count = carrito.reduce((total, item) => total + item.cantidad, 0);
+        document.getElementById('carritoCount').textContent = count;
+        
+        if (count > 0) {
+            document.getElementById('carritoFlotante').style.display = 'flex';
+        } else {
+            document.getElementById('carritoFlotante').style.display = 'none';
+        }
+    }
+
+    function mostrarNotificacion(mensaje) {
+        // Crear notificación temporal
+        const notif = document.createElement('div');
+        notif.textContent = mensaje;
+        notif.style.cssText = 'position: fixed; top: 20px; right: 20px; background: var(--verde); color: white; padding: 1rem; border-radius: 8px; z-index: 3000;';
+        document.body.appendChild(notif);
+        
+        setTimeout(() => {
+            notif.remove();
+        }, 2000);
+    }
+
+    document.getElementById('carritoFlotante').addEventListener('click', function() {
+        if (carrito.length === 0) {
+            alert('El carrito está vacío');
+            return;
+        }
+        abrirModalPedido();
+    });
+
+    function abrirModalPedido() {
+        // Actualizar resumen del carrito
+        const itemsDiv = document.getElementById('itemsCarrito');
+        itemsDiv.innerHTML = '';
+        
+        let subtotal = 0;
+        
+        carrito.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.style.marginBottom = '0.5rem';
+            itemDiv.innerHTML = `
+                ${item.cantidad} × ${item.nombre} = ${item.precio * item.cantidad} CUP
+                <button onclick="eliminarDelCarrito(${item.id})" style="margin-left: 10px; background: var(--rojo); color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer;">X</button>
+            `;
+            itemsDiv.appendChild(itemDiv);
+            subtotal += item.precio * item.cantidad;
+        });
+        
+        document.getElementById('subtotalCarrito').textContent = subtotal;
+        document.getElementById('modalSubtotal').textContent = subtotal;
+        actualizarTotal();
+        
+        document.getElementById('modalPedido').style.display = 'block';
+    }
+
+    function eliminarDelCarrito(id) {
+        carrito = carrito.filter(item => item.id !== id);
+        actualizarCarritoUI();
+        
+        if (carrito.length === 0) {
+            cerrarModal();
+        } else {
+            abrirModalPedido(); // Refrescar modal
+        }
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalPedido').style.display = 'none';
+        document.getElementById('formPedido').reset();
+    }
+
+    async function cargarRepartos() {
+        const municipio = document.getElementById('cliente_municipio').value;
+        const repartoSelect = document.getElementById('cliente_reparto');
+        
+        if (!municipio) {
+            repartoSelect.innerHTML = '<option value="">Primero seleccione un municipio</option>';
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/zonas/${municipio}`);
+            const zonas = await response.json();
+            
+            repartoSelect.innerHTML = '<option value="">Seleccione reparto</option>';
+            
+            zonas.forEach(zona => {
+                const option = document.createElement('option');
+                option.value = zona.reparto;
+                option.textContent = `${zona.reparto} (${zona.precio} CUP)`;
+                option.dataset.precio = zona.precio;
+                repartoSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error cargando repartos:', error);
+        }
+    }
+
+    function actualizarTotal() {
+        const repartoSelect = document.getElementById('cliente_reparto');
+        const selectedOption = repartoSelect.options[repartoSelect.selectedIndex];
+        
+        if (selectedOption && selectedOption.dataset.precio) {
+            precioMensajeriaActual = parseFloat(selectedOption.dataset.precio);
+        } else {
+            precioMensajeriaActual = 0;
+        }
+        
+        const subtotal = carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0);
+        const total = subtotal + precioMensajeriaActual;
+        
+        document.getElementById('precioMensajeria').textContent = precioMensajeriaActual;
+        document.getElementById('totalPedido').textContent = total;
+    }
+
+    async function enviarPedido(e) {
+        e.preventDefault();
+        
+        if (carrito.length === 0) {
+            alert('El carrito está vacío');
+            return;
+        }
+        
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Enviando...';
+        
+        // Preparar datos
+        const data = {
+            fecha_entrega: document.getElementById('fecha_entrega').value,
+            horario_entrega: document.getElementById('horario_entrega').value,
+            cliente_nombre: document.getElementById('cliente_nombre').value,
+            cliente_telefono: document.getElementById('cliente_telefono').value,
+            cliente_direccion_calle: document.getElementById('cliente_direccion_calle').value,
+            cliente_municipio: document.getElementById('cliente_municipio').value,
+            cliente_reparto: document.getElementById('cliente_reparto').value,
+            observaciones: document.getElementById('observaciones').value,
+            precio_mensajeria: precioMensajeriaActual,
+            items: carrito.map(item => ({
+                producto_id: item.id,
+                cantidad: item.cantidad
+            }))
+        };
+        
+        try {
+            const response = await fetch('/crear-pedido', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert(`¡Pedido #${result.numero_orden} enviado exitosamente! Te contactaremos pronto por WhatsApp.`);
+                carrito = [];
+                actualizarCarritoUI();
+                window.location.href = '/';
+            } else {
+                alert('Error: ' + (result.error || 'Intente nuevamente'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error al enviar el pedido. Por favor intente nuevamente.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Enviar Pedido';
+        }
+    }
+
+    // Cerrar modal al hacer click fuera
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('modalPedido')) {
+            cerrarModal();
+        }
+    }
+</script>
 {% endblock %}
