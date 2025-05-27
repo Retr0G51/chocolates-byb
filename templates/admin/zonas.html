@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Zonas de Entrega - Chocolates ByB</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --chocolate: #6B4423; --chocolate-dark: #4A2C17; --dorado: #D4AF37; --verde: #28a745; --azul: #007bff; }
+        body { font-family: 'Arial', sans-serif; background: #f4f4f4; }
+        .admin-layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: var(--chocolate-dark); color: white; padding: 20px 0; }
+        .sidebar h2 { color: var(--dorado); padding: 0 20px 20px; }
+        .sidebar-menu { list-style: none; margin-top: 20px; }
+        .sidebar-menu a { display: block; color: white; text-decoration: none; padding: 15px 20px; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: var(--chocolate); border-left: 3px solid var(--dorado); }
+        .main-content { flex: 1; padding: 20px; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .data-table { background: white; border-radius: 10px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; }
+        .disponible { color: var(--verde); }
+        .no-disponible { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <aside class="sidebar">
+            <h2>🍫 Admin Panel</h2>
+            <ul class="sidebar-menu">
+                <li><a href="/admin">📊 Dashboard</a></li>
+                <li><a href="/admin/pedidos">📦 Pedidos</a></li>
+                <li><a href="/admin/productos">🍫 Productos</a></li>
+                <li><a href="/admin/zonas" class="active">📍 Zonas</a></li>
+                <li><a href="/" target="_blank">🌐 Ver Tienda</a></li>
+                <li><a href="/logout">🚪 Salir</a></li>
+            </ul>
+        </aside>
+
+        <main class="main-content">
+            <div class="header">
+                <h1>Zonas de Entrega y Precios de Mensajería</h1>
+            </div>
+
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Municipio</th>
+                            <th>Reparto</th>
+                            <th>Precio Mensajería</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for zona in zonas %}
+                        <tr>
+                            <td>{{ zona.municipio }}</td>
+                            <td>{{ zona.reparto }}</td>
+                            <td>{{ zona.precio_mensajeria|int }} CUP</td>
+                            <td>
+                                <span class="{% if zona.disponible %}disponible{% else %}no-disponible{% endif %}">
+                                    {% if zona.disponible %}✓ Disponible{% else %}✗ No disponible{% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
