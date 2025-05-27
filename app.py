@@ -43,6 +43,7 @@ class Producto(db.Model):
     tamano = db.Column(db.String(50))  # grande, mediano, pequeno, vulva
     peso = db.Column(db.String(50))  # 230g, 50g, 15g, 25g
     precio = db.Column(db.Float, nullable=False)
+    costo = db.Column(db.Float, default=0)
     stock = db.Column(db.Integer, default=100)
     imagen = db.Column(db.String(200))
     activo = db.Column(db.Boolean, default=True)
@@ -209,9 +210,10 @@ def calcular_estadisticas():
         db.func.date(Pedido.fecha_pedido) >= inicio_mes
     ).count()
     
+    # CAMBIAR ESTO: usar total en lugar de ganancia
     ingresos_mes = db.session.query(db.func.sum(Pedido.total)).filter(
         db.func.date(Pedido.fecha_pedido) >= inicio_mes,
-        Pedido.estado == 'entregado'
+        Pedido.estado.in_(['pendiente', 'confirmado', 'entregado'])
     ).scalar() or 0
     
     # Producto más vendido
@@ -528,6 +530,7 @@ def nuevo_producto():
                 tamano=request.form['tamano'],
                 peso=request.form['peso'],
                 precio=float(request.form['precio']),
+                costo=float(request.form.get('costo', 0)),  # AGREGAR ESTA LÍNEA
                 stock=int(request.form['stock']),
                 imagen=imagen_filename
             )
@@ -556,6 +559,7 @@ def editar_producto(id):
             producto.tamano = request.form['tamano']
             producto.peso = request.form['peso']
             producto.precio = float(request.form['precio'])
+            producto.costo = float(request.form.get('costo', 0))  # AGREGAR ESTA LÍNEA
             producto.stock = int(request.form['stock'])
             
             # Handle new image if uploaded
