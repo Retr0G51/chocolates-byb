@@ -85,7 +85,11 @@
                         <label>Precio (CUP)</label>
                         <input type="number" step="0.01" name="precio" value="{{ producto.precio if producto else '' }}" required>
                     </div>
-                    
+                    <div class="form-group">
+                        <label>Costo de Producción (CUP)</label>
+                        <input type="number" step="0.01" name="costo" value="{{ producto.costo if producto else '0' }}" required>
+                        <small style="color: #666;">El costo se usa para calcular las ganancias</small>
+                    </div>
                     <div class="form-group">
                         <label>Stock</label>
                         <input type="number" name="stock" value="{{ producto.stock if producto else '50' }}" required>
