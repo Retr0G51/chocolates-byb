@@ -35,14 +35,14 @@
 <body>
     <div class="admin-layout">
         <aside class="sidebar">
-            <h2>Admin Panel</h2>
+            <h2>🍫 Admin Panel</h2>
             <ul class="sidebar-menu">
-                <li><a href="/admin" class="active">Dashboard</a></li>
-                <li><a href="/admin/pedidos">Pedidos</a></li>
-                <li><a href="/admin/zonas">Zonas de Entrega</a></li>
-                <li><a href="/admin/productos">Productos</a></li>
-                <li><a href="/" target="_blank">Ver Tienda</a></li>
-                <li><a href="/logout">Salir</a></li>
+                <li><a href="/admin" class="active">📊 Dashboard</a></li>
+                <li><a href="/admin/pedidos">📦 Pedidos</a></li>
+                <li><a href="/admin/productos">🍫 Productos</a></li>
+                <li><a href="/admin/zonas">📍 Zonas de Entrega</a></li>
+                <li><a href="/" target="_blank">🌐 Ver Tienda</a></li>
+                <li><a href="/logout">🚪 Salir</a></li>
             </ul>
         </aside>
 
@@ -51,22 +51,43 @@
                 <h1>Dashboard</h1>
             </div>
 
+            <!-- Zona de peligro - Reiniciar pedidos -->
+            <div style="background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 1rem; border-radius: 8px; margin-bottom: 20px;">
+                <strong>⚠️ Zona de Peligro:</strong>
+                <button onclick="confirmarReiniciarPedidos()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                    🔄 Reiniciar Todos los Pedidos
+                </button>
+            </div>
+
             <div class="stats-grid">
                 <div class="stat-card primary">
                     <h4>Pedidos Hoy</h4>
-                    <div class="stat-number">{{ stats['pedidos_hoy'] }}</div>
+                    <div class="stat-number">{{ stats.pedidos_hoy }}</div>
+                    <p>Nuevos pedidos</p>
                 </div>
+                
                 <div class="stat-card success">
                     <h4>Pedidos del Mes</h4>
-                    <div class="stat-number">{{ stats['pedidos_mes'] }}</div>
+                    <div class="stat-number">{{ stats.pedidos_mes }}</div>
+                    <p>Total mensual</p>
                 </div>
+                
                 <div class="stat-card warning">
-                    <h4>Ganancias del Mes</h4>
-                    <div class="stat-number">{{ "%.2f"|format(stats['ingresos_mes']) }}</div>
+                    <h4>Ingresos del Mes</h4>
+                    <div class="stat-number">${{ "%.0f"|format(stats.ingresos_mes) }}</div>
+                    <p>Total cobrado</p>
                 </div>
+                
+                <div class="stat-card success">
+                    <h4>Ganancia del Mes</h4>
+                    <div class="stat-number">${{ "%.0f"|format(stats.ganancia_mes) }}</div>
+                    <p>Beneficio neto</p>
+                </div>
+                
                 <div class="stat-card primary">
                     <h4>Producto Estrella</h4>
-                    <div style="font-size: 1.5rem; font-weight: bold; margin: 10px 0;">{{ stats['producto_top'] }}</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; margin: 10px 0;">{{ stats.producto_top }}</div>
+                    <p>Más vendido</p>
                 </div>
             </div>
 
@@ -75,33 +96,60 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Orden</th>
                             <th>Cliente</th>
-                            <th>Producto</th>
+                            <th>Productos</th>
                             <th>Fecha Entrega</th>
                             <th>Total</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
-    {% for pedido in pedidos %}
-    <tr>
-        <td>#{{ pedido.id }}</td>
-        <td>{{ pedido.cliente_nombre }}</td>
-        <td>
-            {% for item in pedido.items %}
-                {{ item.producto.nombre if item.producto else 'N/A' }}{% if not loop.last %}, {% endif %}
-            {% endfor %}
-        </td>
-        <td>{{ pedido.fecha_entrega.strftime('%d/%m/%Y') }}</td>
-        <td>{{ "%.2f"|format(pedido.total) }}</td>
-        <td><span class="badge badge-{{ pedido.estado }}">{{ pedido.estado|capitalize }}</span></td>
-    </tr>
-    {% endfor %}
+                        {% for pedido in pedidos %}
+                        <tr>
+                            <td>#{{ pedido.numero_orden }}</td>
+                            <td>{{ pedido.cliente_nombre }}</td>
+                            <td>
+                                {% for item in pedido.items %}
+                                    {{ item.cantidad }}x {{ item.producto.nombre if item.producto else 'N/A' }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </td>
+                            <td>{{ pedido.fecha_entrega.strftime('%d/%m/%Y') }}</td>
+                            <td>${{ "%.0f"|format(pedido.total) }}</td>
+                            <td><span class="badge badge-{{ pedido.estado }}">{{ pedido.estado|capitalize }}</span></td>
+                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
         </main>
     </div>
+
+    <script>
+        function confirmarReiniciarPedidos() {
+            const confirmacion = confirm(
+                "⚠️ ADVERTENCIA ⚠️\n\n" +
+                "¿Estás SEGURO de que quieres ELIMINAR TODOS los pedidos?\n\n" +
+                "Esta acción:\n" +
+                "• Borrará TODOS los pedidos existentes\n" +
+                "• Reiniciará el contador a #1423\n" +
+                "• NO se puede deshacer\n\n" +
+                "¿Continuar?"
+            );
+            
+            if (confirmacion) {
+                const segundaConfirmacion = prompt(
+                    "Para confirmar, escribe exactamente: ELIMINAR TODO\n\n" +
+                    "Esto borrará permanentemente todos los pedidos."
+                );
+                
+                if (segundaConfirmacion === "ELIMINAR TODO") {
+                    window.location.href = "/admin/reiniciar-pedidos";
+                } else if (segundaConfirmacion !== null) {
+                    alert("Texto incorrecto. Operación cancelada.");
+                }
+            }
+        }
+    </script>
 </body>
 </html>
