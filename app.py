@@ -626,6 +626,45 @@ def admin_zonas():
     zonas = ZonaEntrega.query.order_by(ZonaEntrega.municipio, ZonaEntrega.reparto).all()
     return render_template('admin/zonas.html', zonas=zonas)
 
+@app.route('/admin/zona/nueva', methods=['POST'])
+@login_required
+def nueva_zona():
+    try:
+        zona = ZonaEntrega(
+            municipio=request.form['municipio'],
+            reparto=request.form['reparto'],
+            precio_mensajeria=float(request.form['precio']),
+            disponible=True
+        )
+        db.session.add(zona)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error agregando zona: {e}")
+    
+    return redirect(url_for('admin_zonas'))
+
+@app.route('/admin/zona/<int:id>/editar', methods=['POST'])
+@login_required
+def editar_zona(id):
+    zona = ZonaEntrega.query.get_or_404(id)
+    try:
+        zona.precio_mensajeria = float(request.form['precio'])
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error editando zona: {e}")
+    
+    return redirect(url_for('admin_zonas'))
+
+@app.route('/admin/zona/<int:id>/toggle')
+@login_required
+def toggle_zona(id):
+    zona = ZonaEntrega.query.get_or_404(id)
+    zona.disponible = not zona.disponible
+    db.session.commit()
+    return redirect(url_for('admin_zonas'))
+
 @app.route('/admin/exportar-pedidos')
 @login_required
 def exportar_pedidos():
