@@ -5,7 +5,7 @@
     <title>Zonas de Entrega - Chocolates ByB</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --chocolate: #6B4423; --chocolate-dark: #4A2C17; --dorado: #D4AF37; --verde: #28a745; --azul: #007bff; }
+        :root { --chocolate: #6B4423; --chocolate-dark: #4A2C17; --dorado: #D4AF37; --verde: #28a745; --azul: #007bff; --rojo: #dc3545; }
         body { font-family: 'Arial', sans-serif; background: #f4f4f4; }
         .admin-layout { display: flex; min-height: 100vh; }
         .sidebar { width: 250px; background: var(--chocolate-dark); color: white; padding: 20px 0; }
@@ -14,13 +14,73 @@
         .sidebar-menu a { display: block; color: white; text-decoration: none; padding: 15px 20px; }
         .sidebar-menu a:hover, .sidebar-menu a.active { background: var(--chocolate); border-left: 3px solid var(--dorado); }
         .main-content { flex: 1; padding: 20px; }
-        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-        .data-table { background: white; border-radius: 10px; overflow: hidden; }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .zona-form { 
+            background: white; 
+            padding: 2rem; 
+            border-radius: 10px; 
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .form-inline {
+            display: grid;
+            grid-template-columns: 1fr 1fr 200px 100px;
+            gap: 1rem;
+            align-items: end;
+        }
+        
+        .form-group { margin-bottom: 0; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: var(--chocolate); }
+        .form-group input, .form-group select { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+        }
+        
+        .data-table { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f8f9fa; }
+        th { background: var(--chocolate); color: white; }
+        
         .disponible { color: var(--verde); }
-        .no-disponible { color: #dc3545; }
+        .no-disponible { color: var(--rojo); }
+        
+        .btn { 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary { background: var(--azul); color: white; }
+        .btn-success { background: var(--verde); color: white; }
+        .btn-danger { background: var(--rojo); color: white; }
+        .btn-warning { background: #ffc107; color: #333; }
+        
+        .btn:hover { opacity: 0.8; transform: translateY(-1px); }
+        
+        .municipio-section {
+            margin-bottom: 2rem;
+        }
+        
+        .municipio-header {
+            background: var(--chocolate);
+            color: white;
+            padding: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .form-inline { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -31,7 +91,7 @@
                 <li><a href="/admin">📊 Dashboard</a></li>
                 <li><a href="/admin/pedidos">📦 Pedidos</a></li>
                 <li><a href="/admin/productos">🍫 Productos</a></li>
-                <li><a href="/admin/zonas" class="active">📍 Zonas</a></li>
+                <li><a href="/admin/zonas" class="active">📍 Zonas de Entrega</a></li>
                 <li><a href="/" target="_blank">🌐 Ver Tienda</a></li>
                 <li><a href="/logout">🚪 Salir</a></li>
             </ul>
@@ -39,36 +99,131 @@
 
         <main class="main-content">
             <div class="header">
-                <h1>Zonas de Entrega y Precios de Mensajería</h1>
+                <h1>📍 Zonas de Entrega y Precios de Mensajería</h1>
             </div>
 
+            <!-- Formulario para agregar nueva zona -->
+            <div class="zona-form">
+                <h3 style="margin-bottom: 1rem; color: var(--chocolate);">➕ Agregar Nueva Zona</h3>
+                <form method="POST" action="/admin/zona/nueva">
+                    <div class="form-inline">
+                        <div class="form-group">
+                            <label>Municipio</label>
+                            <select name="municipio" required>
+                                <option value="">Seleccione...</option>
+                                <option value="Guanabacoa">Guanabacoa</option>
+                                <option value="San Miguel">San Miguel</option>
+                                <option value="Marianao">Marianao</option>
+                                <option value="Playa">Playa</option>
+                                <option value="La Lisa">La Lisa</option>
+                                <option value="Plaza">Plaza</option>
+                                <option value="Centro Habana">Centro Habana</option>
+                                <option value="Habana Vieja">Habana Vieja</option>
+                                <option value="Boyeros">Boyeros</option>
+                                <option value="Cerro">Cerro</option>
+                                <option value="10 de Octubre">10 de Octubre</option>
+                                <option value="Arroyo Naranjo">Arroyo Naranjo</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Reparto</label>
+                            <input type="text" name="reparto" required placeholder="Ej: Alamar">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Precio Mensajería (CUP)</label>
+                            <input type="number" name="precio" required min="0" placeholder="1000">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">Agregar Zona</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabla de zonas agrupadas por municipio -->
             <div class="data-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Municipio</th>
-                            <th>Reparto</th>
-                            <th>Precio Mensajería</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for zona in zonas %}
-                        <tr>
-                            <td>{{ zona.municipio }}</td>
-                            <td>{{ zona.reparto }}</td>
-                            <td>{{ zona.precio_mensajeria|int }} CUP</td>
-                            <td>
-                                <span class="{% if zona.disponible %}disponible{% else %}no-disponible{% endif %}">
-                                    {% if zona.disponible %}✓ Disponible{% else %}✗ No disponible{% endif %}
-                                </span>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                {% set municipios_agrupados = zonas|groupby('municipio') %}
+                {% for municipio, zonas_municipio in municipios_agrupados %}
+                <div class="municipio-section">
+                    <div class="municipio-header">
+                        📍 {{ municipio }}
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Reparto</th>
+                                <th>Precio Mensajería</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for zona in zonas_municipio %}
+                            <tr>
+                                <td>{{ zona.reparto }}</td>
+                                <td>
+                                    <strong>{{ zona.precio_mensajeria|int }}</strong> CUP
+                                </td>
+                                <td>
+                                    <span class="{% if zona.disponible %}disponible{% else %}no-disponible{% endif %}">
+                                        {% if zona.disponible %}✓ Disponible{% else %}✗ No disponible{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="editarZona({{ zona.id }}, '{{ zona.reparto }}', {{ zona.precio_mensajeria }})" 
+                                            class="btn btn-primary btn-sm">✏️ Editar</button>
+                                    
+                                    {% if zona.disponible %}
+                                        <a href="/admin/zona/{{ zona.id }}/toggle" 
+                                           class="btn btn-warning btn-sm">⏸️ Desactivar</a>
+                                    {% else %}
+                                        <a href="/admin/zona/{{ zona.id }}/toggle" 
+                                           class="btn btn-success btn-sm">▶️ Activar</a>
+                                    {% endif %}
+                                </button>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endfor %}
             </div>
         </main>
     </div>
+
+    <!-- Modal para editar zona -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="background: white; max-width: 400px; margin: 100px auto; padding: 2rem; border-radius: 10px;">
+            <h3 style="margin-bottom: 1rem;">Editar Zona</h3>
+            <form method="POST" id="editForm">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Reparto</label>
+                    <input type="text" id="editReparto" readonly style="background: #f5f5f5;">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label>Nuevo Precio (CUP)</label>
+                    <input type="number" name="precio" id="editPrecio" required min="0">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                <button type="button" onclick="cerrarModal()" class="btn btn-danger">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function editarZona(id, reparto, precio) {
+            document.getElementById('editReparto').value = reparto;
+            document.getElementById('editPrecio').value = precio;
+            document.getElementById('editForm').action = `/admin/zona/${id}/editar`;
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function cerrarModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+    </script>
 </body>
 </html>
