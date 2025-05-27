@@ -110,7 +110,7 @@ def get_next_order_number():
     last_order = Pedido.query.order_by(Pedido.numero_orden.desc()).first()
     if last_order and last_order.numero_orden:
         return last_order.numero_orden + 1
-    return 1423  # Starting number
+    return 1  # Starting number
 
 def format_horario(horario):
     horarios = {
@@ -210,11 +210,26 @@ def calcular_estadisticas():
         db.func.date(Pedido.fecha_pedido) >= inicio_mes
     ).count()
     
-    # CAMBIAR ESTO: usar total en lugar de ganancia
+    # INGRESOS del mes (total que pagan los clientes)
     ingresos_mes = db.session.query(db.func.sum(Pedido.total)).filter(
         db.func.date(Pedido.fecha_pedido) >= inicio_mes,
         Pedido.estado.in_(['pendiente', 'confirmado', 'entregado'])
     ).scalar() or 0
+    
+    # GANANCIAS del mes (ingresos - costos)
+    # Primero obtenemos todos los pedidos del mes
+    pedidos_del_mes = Pedido.query.filter(
+        db.func.date(Pedido.fecha_pedido) >= inicio_mes,
+        Pedido.estado.in_(['pendiente', 'confirmado', 'entregado'])
+    ).all()
+    
+    ganancia_total = 0
+    for pedido in pedidos_del_mes:
+        for item in pedido.items:
+            if item.producto:
+                # Ganancia = (precio_venta - costo) * cantidad
+                ganancia_item = (item.producto.precio - item.producto.costo) * item.cantidad
+                ganancia_total += ganancia_item
     
     # Producto más vendido
     producto_top = db.session.query(
@@ -226,6 +241,7 @@ def calcular_estadisticas():
         'pedidos_hoy': pedidos_hoy,
         'pedidos_mes': pedidos_mes,
         'ingresos_mes': ingresos_mes,
+        'ganancia_mes': ganancia_total,  # NUEVA: ganancia real
         'producto_top': producto_top[0] if producto_top else 'N/A'
     }
 
@@ -700,6 +716,23 @@ def exportar_pedidos():
         as_attachment=True,
         download_name=f'pedidos_{datetime.now().strftime("%Y%m%d")}.csv'
     )
+
+@app.route('/admin/reiniciar-pedidos')
+@login_required
+def reiniciar_pedidos():
+    try:
+        # Eliminar todos los items de pedidos primero
+        ItemPedido.query.delete()
+        # Luego eliminar todos los pedidos
+        Pedido.query.delete()
+        db.session.commit()
+        
+        # Mensaje de éxito (opcional, puedes usar flash messages)
+        return redirect(url_for('admin_dashboard'))
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error reiniciando pedidos: {e}")
+        return redirect(url_for('admin_dashboard'))
 
 @app.route('/static/uploads/<filename>')
 def uploaded_file(filename):
