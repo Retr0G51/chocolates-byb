@@ -598,6 +598,27 @@ def toggle_producto(id):
     producto.activo = not producto.activo
     db.session.commit()
     return redirect(url_for('admin_productos'))
+@app.route('/admin/producto/<int:id>/eliminar')
+@login_required
+def eliminar_producto(id):
+    producto = Producto.query.get_or_404(id)
+    
+    try:
+        # Delete image file if exists
+        if producto.imagen:
+            imagen_path = os.path.join(app.config['UPLOAD_FOLDER'], producto.imagen)
+            if os.path.exists(imagen_path):
+                os.remove(imagen_path)
+        
+        # Delete product
+        db.session.delete(producto)
+        db.session.commit()
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error eliminando producto: {e}")
+    
+    return redirect(url_for('admin_productos'))
 
 @app.route('/admin/zonas')
 @login_required
