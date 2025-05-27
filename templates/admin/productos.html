@@ -5,7 +5,7 @@
     <title>Productos - Chocolates ByB</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root { --chocolate: #6B4423; --chocolate-dark: #4A2C17; --dorado: #D4AF37; --verde: #28a745; --azul: #007bff; }
+        :root { --chocolate: #6B4423; --chocolate-dark: #4A2C17; --dorado: #D4AF37; --verde: #28a745; --azul: #007bff; --rojo: #dc3545; }
         body { font-family: 'Arial', sans-serif; background: #f4f4f4; }
         .admin-layout { display: flex; min-height: 100vh; }
         .sidebar { width: 250px; background: var(--chocolate-dark); color: white; padding: 20px 0; }
@@ -15,76 +15,199 @@
         .sidebar-menu a:hover, .sidebar-menu a.active { background: var(--chocolate); border-left: 3px solid var(--dorado); }
         .main-content { flex: 1; padding: 20px; }
         .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .productos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .producto-admin-card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .producto-img-admin { height: 150px; background: var(--chocolate); display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--dorado); }
-        .producto-info-admin { padding: 15px; }
-        .producto-actions { display: flex; justify-content: space-between; margin-top: 15px; }
-        .btn { padding: 8px 16px; border-radius: 5px; text-decoration: none; font-size: 0.9rem; border: none; cursor: pointer; }
-        .btn-primary { background: var(--azul); color: white; }
-        .btn-warning { background: #ffc107; color: #333; }
-        .btn-new { background: var(--verde); color: white; padding: 10px 20px; }
-        .stock-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; margin-left: 10px; }
+        
+        /* Tabla mejorada */
+        .data-table { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #ddd; vertical-align: middle; }
+        th { background: var(--chocolate); color: white; font-weight: bold; }
+        
+        .producto-mini-img { 
+            width: 60px; 
+            height: 60px; 
+            object-fit: cover; 
+            border-radius: 8px; 
+            background: var(--crema);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        
+        .producto-mini-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .tipo-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        
+        .tipo-blanco { background: #f8f9fa; color: #333; }
+        .tipo-con_leche { background: #8B4513; color: white; }
+        
+        .stock-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        
         .stock-ok { background: #d4edda; color: #155724; }
         .stock-low { background: #fff3cd; color: #856404; }
+        .stock-out { background: #f8d7da; color: #721c24; }
+        
+        .estado-activo { color: var(--verde); }
+        .estado-inactivo { color: var(--rojo); }
+        
+        .acciones-btn {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .btn { 
+            padding: 6px 12px; 
+            border-radius: 5px; 
+            text-decoration: none; 
+            font-size: 0.85rem; 
+            border: none; 
+            cursor: pointer; 
+            transition: all 0.3s;
+        }
+        
+        .btn-primary { background: var(--azul); color: white; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-danger { background: var(--rojo); color: white; }
+        .btn-success { background: var(--verde); color: white; }
+        .btn-new { background: var(--verde); color: white; padding: 10px 20px; }
+        
+        .btn:hover { opacity: 0.8; transform: translateY(-1px); }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid var(--azul);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .producto-mini-img { width: 40px; height: 40px; }
+            .acciones-btn { flex-direction: column; }
+            .btn { width: 100%; }
+        }
     </style>
 </head>
 <body>
     <div class="admin-layout">
         <aside class="sidebar">
-            <h2>Admin Panel</h2>
+            <h2>🍫 Admin Panel</h2>
             <ul class="sidebar-menu">
-                <li><a href="/admin">Dashboard</a></li>
-                <li><a href="/admin/pedidos">Pedidos</a></li>
-                <li><a href="/admin/productos" class="active">Productos</a></li>
-                <li><a href="/" target="_blank">Ver Tienda</a></li>
-                <li><a href="/logout">Salir</a></li>
+                <li><a href="/admin">📊 Dashboard</a></li>
+                <li><a href="/admin/pedidos">📦 Pedidos</a></li>
+                <li><a href="/admin/productos" class="active">🍫 Productos</a></li>
+                <li><a href="/admin/zonas">📍 Zonas de Entrega</a></li>
+                <li><a href="/" target="_blank">🌐 Ver Tienda</a></li>
+                <li><a href="/logout">🚪 Salir</a></li>
             </ul>
         </aside>
 
         <main class="main-content">
             <div class="header">
-                <h1>Gestion de Productos</h1>
+                <h1>Gestión de Productos</h1>
                 <a href="/admin/producto/nuevo" class="btn btn-new">+ Nuevo Producto</a>
             </div>
 
-            <div class="productos-grid">
-                {% for producto in productos %}
-                <div class="producto-admin-card">
-                    <div class="producto-img-admin">
-                        {% if producto.tipo == 'blanco' %}🤍{% else %}🍫{% endif %}
-                    </div>
-                    <div class="producto-info-admin">
-                        <h3>{{ producto.nombre }}</h3>
-                        <p style="color: #666; font-size: 0.9rem;">{{ producto.descripcion[:50] }}...</p>
-                        <p style="margin: 10px 0;">
-                            <strong>Precio:</strong> ${{ "%.2f"|format(producto.precio) }}
-                            <strong style="margin-left: 15px;">Costo:</strong> ${{ "%.2f"|format(producto.costo) }}
-                        </p>
-                        <p>
-                            <strong>Stock:</strong> {{ producto.stock }}
-                            <span class="stock-badge {% if producto.stock > 20 %}stock-ok{% else %}stock-low{% endif %}">
-                                {% if producto.stock > 20 %}Disponible{% else %}Bajo{% endif %}
-                            </span>
-                        </p>
-                        <p style="margin-top: 10px;">
-                            <strong>Estado:</strong>
-                            {% if producto.activo %}
-                                <span style="color: var(--verde);">Activo</span>
-                            {% else %}
-                                <span style="color: #dc3545;">Inactivo</span>
-                            {% endif %}
-                        </p>
-                        <div class="producto-actions">
-                            <a href="/admin/producto/{{ producto.id }}/toggle" class="btn btn-warning">
-                                {% if producto.activo %}Desactivar{% else %}Activar{% endif %}
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+            <div class="info-box">
+                <strong>💡 Tip:</strong> El tamaño ideal para las fotos es <strong>800x800 píxeles</strong> en formato JPG o PNG. 
+                Las imágenes se redimensionarán automáticamente.
+            </div>
+
+            <div class="data-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Producto</th>
+                            <th>Tipo</th>
+                            <th>Tamaño</th>
+                            <th>Precio</th>
+                            <th>Costo</th>
+                            <th>Stock</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos %}
+                        <tr>
+                            <td>
+                                <div class="producto-mini-img">
+                                    {% if producto.imagen %}
+                                    <img src="/static/uploads/{{ producto.imagen }}" alt="{{ producto.nombre }}">
+                                    {% else %}
+                                        {% if producto.tipo == 'blanco' %}🤍{% else %}🍫{% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <strong>{{ producto.nombre }}</strong><br>
+                                <small style="color: #666;">{{ producto.peso }}</small>
+                            </td>
+                            <td>
+                                <span class="tipo-badge tipo-{{ producto.tipo }}">
+                                    {{ producto.tipo|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+                            <td>{{ producto.tamano|title }}</td>
+                            <td><strong>{{ producto.precio|int }}</strong> CUP</td>
+                            <td>{{ producto.costo|int }} CUP</td>
+                            <td>
+                                <span class="stock-badge {% if producto.stock > 20 %}stock-ok{% elif producto.stock > 0 %}stock-low{% else %}stock-out{% endif %}">
+                                    {{ producto.stock }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if producto.activo %}
+                                    <span class="estado-activo">✓ Activo</span>
+                                {% else %}
+                                    <span class="estado-inactivo">✗ Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="acciones-btn">
+                                    <a href="/admin/producto/{{ producto.id }}/editar" class="btn btn-primary" title="Editar">✏️</a>
+                                    
+                                    {% if producto.activo %}
+                                        <a href="/admin/producto/{{ producto.id }}/toggle" class="btn btn-warning" title="Desactivar">⏸️</a>
+                                    {% else %}
+                                        <a href="/admin/producto/{{ producto.id }}/toggle" class="btn btn-success" title="Activar">▶️</a>
+                                    {% endif %}
+                                    
+                                    <button onclick="confirmarEliminar({{ producto.id }}, '{{ producto.nombre }}')" class="btn btn-danger" title="Eliminar">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </main>
     </div>
+
+    <script>
+        function confirmarEliminar(id, nombre) {
+            if (confirm(`¿Estás seguro de que quieres eliminar "${nombre}"?\n\nEsta acción no se puede deshacer.`)) {
+                window.location.href = `/admin/producto/${id}/eliminar`;
+            }
+        }
+    </script>
 </body>
 </html>
