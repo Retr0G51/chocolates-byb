@@ -53,19 +53,19 @@
             <div class="stats-grid">
                 <div class="stat-card primary">
                     <h4>Pedidos Hoy</h4>
-                    <div class="stat-number">{{ stats.pedidos_hoy }}</div>
+                    <div class="stat-number">{{ stats['pedidos_hoy'] }}</div>
                 </div>
                 <div class="stat-card success">
                     <h4>Pedidos del Mes</h4>
-                    <div class="stat-number">{{ stats.pedidos_mes }}</div>
+                    <div class="stat-number">{{ stats['pedidos_mes'] }}</div>
                 </div>
                 <div class="stat-card warning">
                     <h4>Ganancias del Mes</h4>
-                    <div class="stat-number">${{ "%.2f"|format(stats.ganancias_mes) }}</div>
+                    <div class="stat-number">{{ "%.2f"|format(stats['ganancias_mes']) }}</div>
                 </div>
                 <div class="stat-card primary">
                     <h4>Producto Estrella</h4>
-                    <div style="font-size: 1.5rem; font-weight: bold; margin: 10px 0;">{{ stats.producto_top }}</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; margin: 10px 0;">{{ stats['producto_top'] }}</div>
                 </div>
             </div>
 
@@ -89,7 +89,7 @@
                             <td>{{ pedido.cliente_nombre }}</td>
                             <td>{{ pedido.producto.nombre if pedido.producto else 'N/A' }}</td>
                             <td>{{ pedido.fecha_entrega.strftime('%d/%m/%Y') }}</td>
-                            <td>${{ "%.2f"|format(pedido.total) }}</td>
+                            <td>{{ "%.2f"|format(pedido.total) }}</td>
                             <td><span class="badge badge-{{ pedido.estado }}">{{ pedido.estado|capitalize }}</span></td>
                         </tr>
                         {% endfor %}
@@ -99,4 +99,4 @@
         </main>
     </div>
 </body>
-  </html>
+</html>
