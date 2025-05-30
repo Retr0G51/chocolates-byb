@@ -1,13 +1,21 @@
 import os
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session, send_file
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import requests
 import csv
 import io
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from functools import wraps
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+import json
+from io import BytesIO
+import base64
+from collections import defaultdict
+from sqlalchemy import func, extract, and_
 
 app = Flask(__name__)
 
@@ -79,6 +87,37 @@ class Pedido(db.Model):
     
     # Relationship
     items = db.relationship('ItemPedido', backref='pedido', lazy=True, cascade='all, delete-orphan')
+    
+    def actualizar_cliente(self):
+        """Actualiza o crea un cliente basado en el pedido"""
+        cliente = Cliente.query.filter_by(telefono=self.cliente_telefono).first()
+        
+        if not cliente:
+            cliente = Cliente(
+                nombre=self.cliente_nombre,
+                telefono=self.cliente_telefono,
+                direccion_calle=self.cliente_direccion_calle,
+                municipio=self.cliente_municipio,
+                reparto=self.cliente_reparto,
+                fecha_registro=datetime.utcnow(),
+                ultimo_pedido=self.fecha_pedido,
+                pedidos_completados=1,
+                total_gastado=self.total
+            )
+        else:
+            cliente.ultimo_pedido = self.fecha_pedido
+            cliente.pedidos_completados += 1
+            cliente.total_gastado += self.total
+            # Actualizar dirección si ha cambiado
+            if self.cliente_direccion_calle:
+                cliente.direccion_calle = self.cliente_direccion_calle
+            if self.cliente_municipio:
+                cliente.municipio = self.cliente_municipio
+            if self.cliente_reparto:
+                cliente.reparto = self.cliente_reparto
+        
+        db.session.add(cliente)
+        return cliente
 
 class ItemPedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -93,6 +132,48 @@ class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+
+class Cliente(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    telefono = db.Column(db.String(20), nullable=False, unique=True)
+    email = db.Column(db.String(120))
+    direccion_calle = db.Column(db.Text)
+    municipio = db.Column(db.String(100))
+    reparto = db.Column(db.String(100))
+    fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
+    ultimo_pedido = db.Column(db.DateTime)
+    pedidos_completados = db.Column(db.Integer, default=0)
+    total_gastado = db.Column(db.Float, default=0)
+    notas = db.Column(db.Text)
+    
+class MateriaPrima(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    unidad = db.Column(db.String(20))  # kg, g, l, ml, etc.
+    stock = db.Column(db.Float, default=0)
+    costo_unitario = db.Column(db.Float, default=0)
+    proveedor = db.Column(db.String(100))
+    fecha_ultima_compra = db.Column(db.DateTime)
+    nivel_alerta = db.Column(db.Float)  # Nivel mínimo para alertar
+    notas = db.Column(db.Text)
+
+class Receta(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    producto_id = db.Column(db.Integer, db.ForeignKey('producto.id'), nullable=False)
+    producto = db.relationship('Producto', backref='recetas')
+    ingredientes = db.relationship('RecetaIngrediente', backref='receta', cascade='all, delete-orphan')
+    costo_total = db.Column(db.Float, default=0)
+    rendimiento = db.Column(db.Integer)  # Cuántas unidades produce
+    tiempo_preparacion = db.Column(db.Integer)  # minutos
+    instrucciones = db.Column(db.Text)
+
+class RecetaIngrediente(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    receta_id = db.Column(db.Integer, db.ForeignKey('receta.id'), nullable=False)
+    materia_prima_id = db.Column(db.Integer, db.ForeignKey('materia_prima.id'), nullable=False)
+    materia_prima = db.relationship('MateriaPrima')
+    cantidad = db.Column(db.Float, nullable=False)
 
 # HELPER FUNCTIONS
 def allowed_file(filename):
@@ -198,6 +279,181 @@ def enviar_whatsapp(mensaje):
         print(f"WhatsApp Error: {e}")
         return False
 
+def generar_informe_financiero(inicio_fecha=None, fin_fecha=None):
+    """Genera un informe financiero detallado para un período"""
+    if not inicio_fecha:
+        # Por defecto, el mes actual
+        hoy = date.today()
+        inicio_fecha = date(hoy.year, hoy.month, 1)
+    
+    if not fin_fecha:
+        # Por defecto, fecha actual
+        fin_fecha = date.today()
+    
+    # Consulta pedidos en el período
+    pedidos = Pedido.query.filter(
+        and_(
+            func.date(Pedido.fecha_pedido) >= inicio_fecha,
+            func.date(Pedido.fecha_pedido) <= fin_fecha,
+            Pedido.estado.in_(['confirmado', 'entregado'])
+        )
+    ).all()
+    
+    # Calcular métricas
+    total_ingresos = sum(p.total for p in pedidos)
+    total_mensajeria = sum(p.precio_mensajeria for p in pedidos)
+    
+    # Costo de productos vendidos
+    costo_productos = 0
+    for pedido in pedidos:
+        for item in pedido.items:
+            if item.producto:
+                costo_productos += item.producto.costo * item.cantidad
+    
+    # Ganancia bruta y neta
+    ganancia_bruta = total_ingresos - costo_productos
+    ganancia_neta = ganancia_bruta - total_mensajeria  # Simplificado, se pueden añadir más gastos
+    
+    # Ventas por producto
+    ventas_por_producto = defaultdict(lambda: {'cantidad': 0, 'ingresos': 0, 'costo': 0})
+    for pedido in pedidos:
+        for item in pedido.items:
+            if item.producto:
+                ventas_por_producto[item.producto.nombre]['cantidad'] += item.cantidad
+                ventas_por_producto[item.producto.nombre]['ingresos'] += item.subtotal
+                ventas_por_producto[item.producto.nombre]['costo'] += item.producto.costo * item.cantidad
+    
+    # Ventas por día
+    ventas_por_dia = defaultdict(float)
+    for pedido in pedidos:
+        dia = pedido.fecha_pedido.strftime('%Y-%m-%d')
+        ventas_por_dia[dia] += pedido.total
+    
+    # Métricas por zona
+    ventas_por_zona = defaultdict(float)
+    for pedido in pedidos:
+        zona = f"{pedido.cliente_municipio} - {pedido.cliente_reparto}"
+        ventas_por_zona[zona] += pedido.total
+    
+    return {
+        'periodo': {
+            'inicio': inicio_fecha.strftime('%Y-%m-%d'),
+            'fin': fin_fecha.strftime('%Y-%m-%d'),
+        },
+        'resumen': {
+            'total_pedidos': len(pedidos),
+            'total_ingresos': total_ingresos,
+            'costo_productos': costo_productos,
+            'total_mensajeria': total_mensajeria,
+            'ganancia_bruta': ganancia_bruta,
+            'ganancia_neta': ganancia_neta,
+            'margen_ganancia': (ganancia_neta / total_ingresos * 100) if total_ingresos > 0 else 0
+        },
+        'ventas_por_producto': dict(ventas_por_producto),
+        'ventas_por_dia': dict(ventas_por_dia),
+        'ventas_por_zona': dict(ventas_por_zona)
+    }
+
+def generar_grafico_ventas(periodo='mes'):
+    """Genera un gráfico de ventas para el dashboard"""
+    hoy = date.today()
+    
+    if periodo == 'semana':
+        inicio = hoy - timedelta(days=7)
+        agrupacion = func.date(Pedido.fecha_pedido)
+        formato = '%d/%m'
+    elif periodo == 'mes':
+        inicio = date(hoy.year, hoy.month, 1)
+        agrupacion = func.date(Pedido.fecha_pedido)
+        formato = '%d/%m'
+    elif periodo == 'año':
+        inicio = date(hoy.year, 1, 1)
+        agrupacion = extract('month', Pedido.fecha_pedido)
+        formato = '%m/%Y'
+    else:
+        inicio = date(hoy.year, 1, 1)
+        agrupacion = extract('month', Pedido.fecha_pedido)
+        formato = '%m/%Y'
+    
+    # Consulta SQL para obtener ventas agrupadas por período
+    ventas = db.session.query(
+        agrupacion.label('fecha'),
+        func.sum(Pedido.total).label('total')
+    ).filter(
+        func.date(Pedido.fecha_pedido) >= inicio,
+        Pedido.estado.in_(['confirmado', 'entregado'])
+    ).group_by(agrupacion).all()
+    
+    # Preparar datos para el gráfico
+    fechas = []
+    totales = []
+    
+    for v in ventas:
+        if periodo == 'año':
+            # Si es por año, necesitamos convertir el número de mes a fecha
+            fecha_obj = date(hoy.year, int(v.fecha), 1)
+            fechas.append(fecha_obj.strftime(formato))
+        else:
+            fechas.append(v.fecha.strftime(formato) if hasattr(v.fecha, 'strftime') else str(v.fecha))
+        totales.append(float(v.total))
+    
+    # Crear gráfico con matplotlib
+    plt.figure(figsize=(10, 5))
+    plt.bar(fechas, totales, color='#6B4423')
+    plt.xlabel('Fecha')
+    plt.ylabel('Ventas (CUP)')
+    plt.title(f'Ventas por {periodo}')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    
+    # Convertir gráfico a imagen base64
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+    imagen = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    plt.close()
+    
+    return f"data:image/png;base64,{imagen}"
+
+def verificar_inventario():
+    """Verifica el inventario y genera alertas"""
+    productos_bajos = Producto.query.filter(
+        and_(
+            Producto.stock < 10,
+            Producto.activo == True
+        )
+    ).all()
+    
+    materias_primas_bajas = MateriaPrima.query.filter(
+        MateriaPrima.stock < MateriaPrima.nivel_alerta
+    ).all()
+    
+    return {
+        'productos_bajos': productos_bajos,
+        'materias_primas_bajas': materias_primas_bajas
+    }
+
+def analizar_clientes():
+    """Analiza clientes para identificar frecuentes y potenciales"""
+    # Clientes frecuentes (más de 3 pedidos)
+    clientes_frecuentes = Cliente.query.filter(
+        Cliente.pedidos_completados >= 3
+    ).order_by(Cliente.total_gastado.desc()).limit(10).all()
+    
+    # Clientes inactivos (sin pedidos en los últimos 2 meses)
+    dos_meses_atras = datetime.now() - timedelta(days=60)
+    clientes_inactivos = Cliente.query.filter(
+        and_(
+            Cliente.pedidos_completados > 0,
+            Cliente.ultimo_pedido < dos_meses_atras
+        )
+    ).all()
+    
+    return {
+        'clientes_frecuentes': clientes_frecuentes,
+        'clientes_inactivos': clientes_inactivos
+    }
+
 def calcular_estadisticas():
     hoy = datetime.now().date()
     inicio_mes = datetime(hoy.year, hoy.month, 1).date()
@@ -231,18 +487,37 @@ def calcular_estadisticas():
                 ganancia_item = (item.producto.precio - item.producto.costo) * item.cantidad
                 ganancia_total += ganancia_item
     
+    # Calcular margen de ganancia
+    margen_ganancia = (ganancia_total / ingresos_mes * 100) if ingresos_mes > 0 else 0
+    
     # Producto más vendido
     producto_top = db.session.query(
         Producto.nombre,
         db.func.sum(ItemPedido.cantidad).label('total')
     ).join(ItemPedido).group_by(Producto.id).order_by(db.desc('total')).first()
     
+    # Alertas de inventario
+    alertas_inventario = Producto.query.filter(
+        Producto.stock < 10,
+        Producto.activo == True
+    ).count()
+    
+    # Alertas de margen de ganancia
+    alertas_margen = Producto.query.filter(
+        (Producto.precio - Producto.costo) / Producto.precio * 100 < 30,
+        Producto.precio > 0,
+        Producto.activo == True
+    ).count()
+    
     return {
         'pedidos_hoy': pedidos_hoy,
         'pedidos_mes': pedidos_mes,
         'ingresos_mes': ingresos_mes,
-        'ganancia_mes': ganancia_total,  # NUEVA: ganancia real
-        'producto_top': producto_top[0] if producto_top else 'N/A'
+        'ganancia_mes': ganancia_total,
+        'margen_ganancia': margen_ganancia,
+        'producto_top': producto_top[0] if producto_top else 'N/A',
+        'alertas_inventario': alertas_inventario,
+        'alertas_margen': alertas_margen
     }
 
 # ZONAS DE ENTREGA DATA
@@ -368,6 +643,22 @@ with app.app_context():
                 )
                 db.session.add(zona)
         db.session.commit()
+        
+    # Crear algunas materias primas iniciales si no existen
+    if MateriaPrima.query.count() == 0:
+        materias_primas_default = [
+            MateriaPrima(nombre="Chocolate Blanco", unidad="kg", stock=5.0, costo_unitario=2500, nivel_alerta=1.0),
+            MateriaPrima(nombre="Chocolate con Leche", unidad="kg", stock=5.0, costo_unitario=2200, nivel_alerta=1.0),
+            MateriaPrima(nombre="Esencia de Vainilla", unidad="ml", stock=200, costo_unitario=5, nivel_alerta=50),
+            MateriaPrima(nombre="Azúcar", unidad="kg", stock=10.0, costo_unitario=500, nivel_alerta=2.0),
+            MateriaPrima(nombre="Leche en Polvo", unidad="kg", stock=3.0, costo_unitario=1800, nivel_alerta=0.5),
+            MateriaPrima(nombre="Moldes", unidad="unidad", stock=50, costo_unitario=350, nivel_alerta=10)
+        ]
+        
+        for mp in materias_primas_default:
+            db.session.add(mp)
+        
+        db.session.commit()
 
 # PUBLIC ROUTES
 @app.route('/')
@@ -443,6 +734,9 @@ def crear_pedido():
         # Update totals
         pedido.subtotal = subtotal
         pedido.total = subtotal + pedido.precio_mensajeria
+        
+        # Actualizar cliente (nuevo método)
+        pedido.actualizar_cliente()
         
         db.session.commit()
         
@@ -614,6 +908,7 @@ def toggle_producto(id):
     producto.activo = not producto.activo
     db.session.commit()
     return redirect(url_for('admin_productos'))
+
 @app.route('/admin/producto/<int:id>/eliminar')
 @login_required
 def eliminar_producto(id):
@@ -733,6 +1028,208 @@ def reiniciar_pedidos():
         db.session.rollback()
         print(f"Error reiniciando pedidos: {e}")
         return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/financiero')
+@login_required
+def admin_financiero():
+    # Por defecto muestra datos del mes actual
+    hoy = date.today()
+    inicio_mes = date(hoy.year, hoy.month, 1)
+    
+    informe = generar_informe_financiero(inicio_mes, hoy)
+    grafico_ventas = generar_grafico_ventas('mes')
+    
+    # Productos más rentables
+    productos_rentables = []
+    for nombre, datos in informe['ventas_por_producto'].items():
+        if datos['ingresos'] > 0:
+            ganancia = datos['ingresos'] - datos['costo']
+            margen = (ganancia / datos['ingresos']) * 100
+            productos_rentables.append({
+                'nombre': nombre,
+                'cantidad': datos['cantidad'],
+                'ingresos': datos['ingresos'],
+                'ganancia': ganancia,
+                'margen': margen
+            })
+    
+    productos_rentables.sort(key=lambda x: x['ganancia'], reverse=True)
+    
+    return render_template(
+        'admin/financiero.html',
+        informe=informe,
+        grafico_ventas=grafico_ventas,
+        productos_rentables=productos_rentables[:5]  # Top 5
+    )
+
+@app.route('/admin/financiero/reporte', methods=['GET', 'POST'])
+@login_required
+def reporte_financiero():
+    if request.method == 'POST':
+        inicio = datetime.strptime(request.form['fecha_inicio'], '%Y-%m-%d').date()
+        fin = datetime.strptime(request.form['fecha_fin'], '%Y-%m-%d').date()
+        tipo_reporte = request.form.get('tipo_reporte', 'completo')
+        
+        informe = generar_informe_financiero(inicio, fin)
+        
+        # Si solicitan exportación
+        if 'exportar' in request.form:
+            formato = request.form.get('formato', 'csv')
+            
+            if formato == 'csv':
+                output = io.StringIO()
+                writer = csv.writer(output)
+                
+                # Cabecera
+                writer.writerow(['Informe Financiero', f'Periodo: {inicio} al {fin}'])
+                writer.writerow([])
+                
+                # Resumen
+                writer.writerow(['Resumen'])
+                for key, value in informe['resumen'].items():
+                    writer.writerow([key.replace('_', ' ').title(), f"{value:.2f}" if isinstance(value, float) else value])
+                
+                writer.writerow([])
+                
+                # Ventas por producto
+                writer.writerow(['Producto', 'Cantidad', 'Ingresos', 'Costo', 'Ganancia', 'Margen (%)'])
+                for nombre, datos in informe['ventas_por_producto'].items():
+                    ganancia = datos['ingresos'] - datos['costo']
+                    margen = (ganancia / datos['ingresos'] * 100) if datos['ingresos'] > 0 else 0
+                    writer.writerow([
+                        nombre, 
+                        datos['cantidad'],
+                        f"{datos['ingresos']:.2f}",
+                        f"{datos['costo']:.2f}",
+                        f"{ganancia:.2f}",
+                        f"{margen:.2f}%"
+                    ])
+                
+                output.seek(0)
+                return send_file(
+                    io.BytesIO(output.getvalue().encode('utf-8')),
+                    mimetype='text/csv',
+                    as_attachment=True,
+                    download_name=f'informe_financiero_{inicio}_{fin}.csv'
+                )
+            
+            # Podría añadirse soporte para PDF u otros formatos aquí
+        
+        return render_template(
+            'admin/reporte_financiero.html',
+            informe=informe,
+            inicio=inicio,
+            fin=fin,
+            tipo_reporte=tipo_reporte
+        )
+    
+    # Si es GET, mostrar formulario
+    return render_template('admin/reporte_financiero_form.html')
+
+@app.route('/admin/clientes')
+@login_required
+def admin_clientes():
+    analisis = analizar_clientes()
+    
+    # Para la plantilla, necesitamos la fecha actual para calcular días inactivos
+    now = datetime.now()
+    
+    # Obtener clientes totales si se solicita la pestaña "todos"
+    clientes_todos = []
+    if request.args.get('tab') == 'todos':
+        clientes_todos = Cliente.query.all()
+    
+    return render_template(
+        'admin/clientes.html',
+        clientes_frecuentes=analisis['clientes_frecuentes'],
+        clientes_inactivos=analisis['clientes_inactivos'],
+        clientes_todos=clientes_todos,
+        now=now
+    )
+
+@app.route('/admin/inventario')
+@login_required
+def admin_inventario():
+    productos = Producto.query.all()
+    materias_primas = MateriaPrima.query.all()
+    alertas = verificar_inventario()
+    
+    return render_template(
+        'admin/inventario.html',
+        productos=productos,
+        materias_primas=materias_primas,
+        alertas=alertas
+    )
+
+@app.route('/admin/recetas')
+@login_required
+def admin_recetas():
+    recetas = Receta.query.all()
+    productos = Producto.query.all()
+    materias_primas = MateriaPrima.query.all()
+    
+    # Si se especifica un producto, filtrar solo esa receta
+    producto_id = request.args.get('producto')
+    if producto_id:
+        recetas = Receta.query.filter_by(producto_id=producto_id).all()
+    
+    return render_template(
+        'admin/recetas.html',
+        recetas=recetas,
+        productos=productos,
+        materias_primas=materias_primas
+    )
+
+@app.route('/admin/receta/nueva', methods=['GET', 'POST'])
+@login_required
+def nueva_receta():
+    if request.method == 'POST':
+        producto_id = request.form['producto_id']
+        ingredientes = json.loads(request.form['ingredientes'])
+        
+        receta = Receta(
+            producto_id=producto_id,
+            rendimiento=request.form.get('rendimiento', 1),
+            tiempo_preparacion=request.form.get('tiempo_preparacion', 0),
+            instrucciones=request.form.get('instrucciones', '')
+        )
+        
+        db.session.add(receta)
+        db.session.flush()  # Obtener ID
+        
+        costo_total = 0
+        for ing in ingredientes:
+            materia_prima = MateriaPrima.query.get(ing['id'])
+            cantidad = float(ing['cantidad'])
+            
+            ingrediente = RecetaIngrediente(
+                receta_id=receta.id,
+                materia_prima_id=materia_prima.id,
+                cantidad=cantidad
+            )
+            
+            costo_total += materia_prima.costo_unitario * cantidad
+            db.session.add(ingrediente)
+        
+        # Actualizar costo total y costo del producto
+        receta.costo_total = costo_total
+        
+        producto = Producto.query.get(producto_id)
+        costo_por_unidad = costo_total / receta.rendimiento
+        producto.costo = costo_por_unidad
+        
+        db.session.commit()
+        
+        return redirect(url_for('admin_recetas'))
+    
+    productos = Producto.query.all()
+    materias_primas = MateriaPrima.query.all()
+    
+    return render_template(
+        'admin/receta_form.html',
+        productos=productos,
+        materias_primas=materias_primas
+    )
 
 @app.route('/static/uploads/<filename>')
 def uploaded_file(filename):
