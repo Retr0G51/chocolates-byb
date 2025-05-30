@@ -49,14 +49,19 @@
 <body>
     <div class="admin-layout">
         <aside class="sidebar">
-            <h2>Admin Panel</h2>
-            <ul class="sidebar-menu">
-                <li><a href="/admin">Dashboard</a></li>
-                <li><a href="/admin/pedidos" class="active">Pedidos</a></li>
-                <li><a href="/admin/productos">Productos</a></li>
-                <li><a href="/" target="_blank">Ver Tienda</a></li>
-                <li><a href="/logout">Salir</a></li>
-            </ul>
+    <h2>🍫 Admin Panel</h2>
+    <ul class="sidebar-menu">
+        <li><a href="/admin">📊 Dashboard</a></li>
+        <li><a href="/admin/pedidos" class="active">📦 Pedidos</a></li>
+        <li><a href="/admin/productos">🍫 Productos</a></li>
+        <li><a href="/admin/zonas">📍 Zonas de Entrega</a></li>
+        <li><a href="/admin/financiero">💰 Financiero</a></li>
+        <li><a href="/admin/inventario">📦 Inventario</a></li>
+        <li><a href="/admin/clientes">👥 Clientes</a></li>
+        <li><a href="/admin/recetas">📝 Recetas</a></li>
+        <li><a href="/" target="_blank">🌐 Ver Tienda</a></li>
+        <li><a href="/logout">🚪 Salir</a></li>
+    </ul>
         </aside>
 
         <main class="main-content">
@@ -65,67 +70,137 @@
             </div>
 
             <div class="filters">
-                <label>Filtrar por estado:</label>
-                <select onchange="window.location.href='/admin/pedidos?estado=' + this.value">
-                    <option value="todos" {% if estado_actual == 'todos' %}selected{% endif %}>Todos</option>
-                    <option value="pendiente" {% if estado_actual == 'pendiente' %}selected{% endif %}>Pendientes</option>
-                    <option value="confirmado" {% if estado_actual == 'confirmado' %}selected{% endif %}>Confirmados</option>
-                    <option value="entregado" {% if estado_actual == 'entregado' %}selected{% endif %}>Entregados</option>
-                </select>
-                
-                <a href="/admin/exportar-pedidos" class="btn-sm btn-primary" style="float: right;">Exportar Excel</a>
+    <label>Filtrar por estado:</label>
+    <select onchange="window.location.href='/admin/pedidos?estado=' + this.value">
+        <option value="todos" {% if estado_actual == 'todos' %}selected{% endif %}>Todos</option>
+        <option value="pendiente" {% if estado_actual == 'pendiente' %}selected{% endif %}>Pendientes</option>
+        <option value="confirmado" {% if estado_actual == 'confirmado' %}selected{% endif %}>Confirmados</option>
+        <option value="entregado" {% if estado_actual == 'entregado' %}selected{% endif %}>Entregados</option>
+    </select>
+    
+    <label style="margin-left: 20px;">Periodo:</label>
+    <select id="periodo-filter">
+        <option value="todos">Todos</option>
+        <option value="hoy">Hoy</option>
+        <option value="semana">Esta semana</option>
+        <option value="mes">Este mes</option>
+    </select>
+    
+    <label style="margin-left: 20px;">Cliente:</label>
+    <input type="text" id="cliente-filter" placeholder="Buscar por nombre..." style="padding: 5px; border-radius: 5px; border: 1px solid #ddd;">
+    
+    <a href="/admin/exportar-pedidos" class="btn-sm btn-primary" style="float: right;">Exportar Excel</a>
             </div>
 
             <div class="data-table">
                 <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Fecha</th>
-                            <th>Cliente</th>
-                            <th>Telefono</th>
-                            <th>Producto</th>
-                            <th>Cant.</th>
-                            <th>Entrega</th>
-                            <th>Total</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for pedido in pedidos %}
-                        <tr>
-                            <td>#{{ pedido.id }}</td>
-                            <td>{{ pedido.fecha_pedido.strftime('%d/%m %H:%M') }}</td>
-                            <td>{{ pedido.cliente_nombre }}</td>
-                            <td>{{ pedido.cliente_telefono }}</td>
-                            <td>
-                              {% for item in pedido.items %}
-                                {{ item.producto.nombre if item.producto else 'N/A' }}{% if not loop.last %}, {% endif %}
-                              {% endfor %}
-                            </td>
-                            <td>
-                              {% for item in pedido.items %}
-                                {{ item.cantidad }}{% if not loop.last %}, {% endif %}
-                              {% endfor %}
-                            </td>
-                            <td>{{ pedido.fecha_entrega.strftime('%d/%m') }}</td>
-                            <td>${{ "%.2f"|format(pedido.total) }}</td>
-                            <td><span class="badge badge-{{ pedido.estado }}">{{ pedido.estado|capitalize }}</span></td>
-                            <td>
-                                {% if pedido.estado == 'pendiente' %}
-                                <button class="btn-sm btn-primary" onclick="cambiarEstado({{ pedido.id }}, 'confirmado')">Confirmar</button>
-                                {% endif %}
-                                {% if pedido.estado == 'confirmado' %}
-                                <button class="btn-sm btn-success" onclick="cambiarEstado({{ pedido.id }}, 'entregado')">Entregado</button>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Cliente</th>
+            <th>Telefono</th>
+            <th>Producto</th>
+            <th>Cant.</th>
+            <th>Entrega</th>
+            <th>Total</th>
+            <th>Ganancia</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pedido in pedidos %}
+        {% set ganancia_pedido = 0 %}
+        {% for item in pedido.items %}
+            {% if item.producto %}
+                {% set ganancia_item = (item.precio_unitario - item.producto.costo) * item.cantidad %}
+                {% set ganancia_pedido = ganancia_pedido + ganancia_item %}
+            {% endif %}
+        {% endfor %}
+        <tr>
+            <td>#{{ pedido.id }}</td>
+            <td>{{ pedido.fecha_pedido.strftime('%d/%m %H:%M') }}</td>
+            <td>{{ pedido.cliente_nombre }}</td>
+            <td>{{ pedido.cliente_telefono }}</td>
+            <td>
+              {% for item in pedido.items %}
+                {{ item.producto.nombre if item.producto else 'N/A' }}{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            </td>
+            <td>
+              {% for item in pedido.items %}
+                {{ item.cantidad }}{% if not loop.last %}, {% endif %}
+              {% endfor %}
+            </td>
+            <td>{{ pedido.fecha_entrega.strftime('%d/%m') }}</td>
+            <td>${{ "%.2f"|format(pedido.total) }}</td>
+            <td>${{ "%.2f"|format(ganancia_pedido) }}</td>
+            <td><span class="badge badge-{{ pedido.estado }}">{{ pedido.estado|capitalize }}</span></td>
+            <td>
+                {% if pedido.estado == 'pendiente' %}
+                <button class="btn-sm btn-primary" onclick="cambiarEstado({{ pedido.id }}, 'confirmado')">Confirmar</button>
+                {% endif %}
+                {% if pedido.estado == 'confirmado' %}
+                <button class="btn-sm btn-success" onclick="cambiarEstado({{ pedido.id }}, 'entregado')">Entregado</button>
+                {% endif %}
+                
+                <!-- Nuevo botón para ver cliente -->
+                <button class="btn-sm btn-secondary" onclick="verCliente('{{ pedido.cliente_telefono }}')">Ver Cliente</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
             </div>
         </main>
     </div>
 </body>
 </html>
+<script>
+    // Funcionalidad para filtrado por cliente
+    document.getElementById('cliente-filter').addEventListener('keyup', function() {
+        const filterText = this.value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const clientName = row.cells[2].textContent.toLowerCase();
+            if (clientName.includes(filterText)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+    
+    // Funcionalidad para filtrado por periodo
+    document.getElementById('periodo-filter').addEventListener('change', function() {
+        const today = new Date();
+        const rows = document.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const dateText = row.cells[1].textContent;
+            const dateParts = dateText.split(' ')[0].split('/');
+            const rowDate = new Date(today.getFullYear(), parseInt(dateParts[1])-1, parseInt(dateParts[0]));
+            
+            let show = true;
+            
+            if (this.value === 'hoy') {
+                show = rowDate.toDateString() === today.toDateString();
+            } else if (this.value === 'semana') {
+                const weekStart = new Date(today);
+                weekStart.setDate(today.getDate() - today.getDay());
+                show = rowDate >= weekStart;
+            } else if (this.value === 'mes') {
+                show = rowDate.getMonth() === today.getMonth() && rowDate.getFullYear() === today.getFullYear();
+            }
+            
+            row.style.display = show ? '' : 'none';
+        });
+    });
+    
+    // Función para ver perfil de cliente
+    function verCliente(telefono) {
+        window.location.href = '/admin/clientes?telefono=' + telefono;
+    }
+</script>
