@@ -1026,6 +1026,72 @@ def toggle_zona(id):
     db.session.commit()
     return redirect(url_for('admin_zonas'))
 
+@app.route('/api/zonas/estadisticas')
+def get_zonas_estadisticas():
+    try:
+        # Obtener todos los pedidos con estado confirmado o entregado
+        pedidos = Pedido.query.filter(Pedido.estado.in_(['confirmado', 'entregado'])).all()
+        
+        # Ventas por municipio
+        ventas_por_municipio = defaultdict(int)
+        pedidos_por_municipio = defaultdict(int)
+        ganancia_por_municipio = defaultdict(float)
+        
+        # Calcular ventas, pedidos y ganancias por municipio
+        for pedido in pedidos:
+            municipio = pedido.cliente_municipio
+            if not municipio:
+                continue
+                
+            ventas_por_municipio[municipio] += pedido.total
+            pedidos_por_municipio[municipio] += 1
+            
+            # Calcular ganancia (simplificado)
+            ganancia = 0
+            for item in pedido.items:
+                if item.producto:
+                    ganancia += (item.precio_unitario - item.producto.costo) * item.cantidad
+            
+            ganancia_por_municipio[municipio] += ganancia
+        
+        # Determinar zona más popular (más pedidos)
+        zona_popular = None
+        max_pedidos = 0
+        for municipio, pedidos_count in pedidos_por_municipio.items():
+            if pedidos_count > max_pedidos:
+                max_pedidos = pedidos_count
+                zona_popular = {'nombre': municipio, 'pedidos': pedidos_count}
+        
+        # Determinar zona más rentable (mayor ganancia)
+        zona_rentable = None
+        max_ganancia = 0
+        for municipio, ganancia in ganancia_por_municipio.items():
+            if ganancia > max_ganancia:
+                max_ganancia = ganancia
+                zona_rentable = {'nombre': municipio, 'ganancia': int(ganancia)}
+        
+        # Determinar zonas sin ventas
+        todas_zonas = set(m for m, _ in ZONAS_DATA.items())
+        zonas_con_ventas = set(ventas_por_municipio.keys())
+        zonas_sin_ventas = todas_zonas - zonas_con_ventas
+        
+        # Preparar datos para el frontend
+        return jsonify({
+            'ventas_por_zona': dict(ventas_por_municipio),
+            'zona_popular': zona_popular,
+            'zona_rentable': zona_rentable,
+            'zonas_sin_ventas': list(zonas_sin_ventas)
+        })
+    except Exception as e:
+        print(f"Error en get_zonas_estadisticas: {e}")
+        return jsonify({
+            'error': str(e),
+            'ventas_por_zona': {},
+            'zona_popular': None,
+            'zona_rentable': None,
+            'zonas_sin_ventas': []
+        })
+
 @app.route('/admin/exportar-pedidos')
 @login_required
 def exportar_pedidos():
@@ -1232,6 +1298,35 @@ def admin_inventario():
         materias_primas=materias_primas,
         alertas=alertas
     )
+
+# Aproximadamente línea 850-900: Añadir una ruta para crear nuevo cliente
+@app.route('/admin/cliente/nuevo', methods=['POST'])
+@login_required
+def nuevo_cliente():
+    try:
+        # Crear nuevo cliente
+        cliente = Cliente(
+            nombre=request.form['cliente_nombre'],
+            telefono=request.form['cliente_telefono'],
+            email=request.form.get('cliente_email', ''),
+            direccion_calle=request.form['cliente_direccion'],
+            municipio=request.form['cliente_municipio'],
+            reparto=request.form['cliente_reparto'],
+            fecha_registro=datetime.utcnow(),
+            ultimo_pedido=None,
+            pedidos_completados=0,
+            total_gastado=0,
+            notas=request.form.get('cliente_notas', '')
+        )
+        
+        db.session.add(cliente)
+        db.session.commit()
+        
+        return redirect(url_for('admin_clientes'))
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error al crear cliente: {e}")
+        return redirect(url_for('admin_clientes'))
 
 @app.route('/admin/producto/ajustar-stock', methods=['POST'])
 @login_required
