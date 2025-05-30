@@ -608,8 +608,14 @@
             </div>
         </div>
     </div>
-
-<form id="formEditarMateriaPrima" action="/admin/materia-prima/editar" method="POST">
+<div id="modalEditarMateriaPrima" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Editar Materia Prima</h3>
+            <button class="modal-close" onclick="closeModal('modalEditarMateriaPrima')">&times;</button>
+        </div>
+        <div class="modal-body">
+        <form id="formEditarMateriaPrima" action="/admin/materia-prima/editar" method="POST">
     <input type="hidden" id="materia_prima_id" name="materia_prima_id">
     <div class="form-group">
         <label>Nombre:</label>
@@ -647,8 +653,9 @@
         <textarea id="mp_notas_edit" name="notas" rows="3"></textarea>
     </div>
     <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar</button>
-</form>
-    
+        </form>
+  </div>
+</div>
     <!-- Modal para Registrar Compra -->
     <div id="modalCompra" class="modal">
         <div class="modal-content">
