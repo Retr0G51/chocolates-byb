@@ -279,80 +279,103 @@ def enviar_whatsapp(mensaje):
         print(f"WhatsApp Error: {e}")
         return False
 
+# Aproximadamente línea 230-260: Modifica la función generar_informe_financiero
 def generar_informe_financiero(inicio_fecha=None, fin_fecha=None):
     """Genera un informe financiero detallado para un período"""
-    if not inicio_fecha:
-        # Por defecto, el mes actual
-        hoy = date.today()
-        inicio_fecha = date(hoy.year, hoy.month, 1)
-    
-    if not fin_fecha:
-        # Por defecto, fecha actual
-        fin_fecha = date.today()
-    
-    # Consulta pedidos en el período
-    pedidos = Pedido.query.filter(
-        and_(
-            func.date(Pedido.fecha_pedido) >= inicio_fecha,
-            func.date(Pedido.fecha_pedido) <= fin_fecha,
-            Pedido.estado.in_(['confirmado', 'entregado'])
-        )
-    ).all()
-    
-    # Calcular métricas
-    total_ingresos = sum(p.total for p in pedidos)
-    total_mensajeria = sum(p.precio_mensajeria for p in pedidos)
-    
-    # Costo de productos vendidos
-    costo_productos = 0
-    for pedido in pedidos:
-        for item in pedido.items:
-            if item.producto:
-                costo_productos += item.producto.costo * item.cantidad
-    
-    # Ganancia bruta y neta
-    ganancia_bruta = total_ingresos - costo_productos
-    ganancia_neta = ganancia_bruta - total_mensajeria  # Simplificado, se pueden añadir más gastos
-    
-    # Ventas por producto
-    ventas_por_producto = defaultdict(lambda: {'cantidad': 0, 'ingresos': 0, 'costo': 0})
-    for pedido in pedidos:
-        for item in pedido.items:
-            if item.producto:
-                ventas_por_producto[item.producto.nombre]['cantidad'] += item.cantidad
-                ventas_por_producto[item.producto.nombre]['ingresos'] += item.subtotal
-                ventas_por_producto[item.producto.nombre]['costo'] += item.producto.costo * item.cantidad
-    
-    # Ventas por día
-    ventas_por_dia = defaultdict(float)
-    for pedido in pedidos:
-        dia = pedido.fecha_pedido.strftime('%Y-%m-%d')
-        ventas_por_dia[dia] += pedido.total
-    
-    # Métricas por zona
-    ventas_por_zona = defaultdict(float)
-    for pedido in pedidos:
-        zona = f"{pedido.cliente_municipio} - {pedido.cliente_reparto}"
-        ventas_por_zona[zona] += pedido.total
-    
-    return {
-        'periodo': {
-            'inicio': inicio_fecha.strftime('%Y-%m-%d'),
-            'fin': fin_fecha.strftime('%Y-%m-%d'),
-        },
-        'resumen': {
-            'total_pedidos': len(pedidos),
-            'total_ingresos': total_ingresos,
-            'costo_productos': costo_productos,
-            'total_mensajeria': total_mensajeria,
-            'ganancia_bruta': ganancia_bruta,
-            'ganancia_neta': ganancia_neta,
-            'margen_ganancia': (ganancia_neta / total_ingresos * 100) if total_ingresos > 0 else 0
-        },
-        'ventas_por_producto': dict(ventas_por_producto),
-        'ventas_por_dia': dict(ventas_por_dia),
-        'ventas_por_zona': dict(ventas_por_zona)
-    }
+    try:
+        if not inicio_fecha:
+            # Por defecto, el mes actual
+            hoy = date.today()
+            inicio_fecha = date(hoy.year, hoy.month, 1)
+        
+        if not fin_fecha:
+            # Por defecto, fecha actual
+            fin_fecha = date.today()
+        
+        # Consulta pedidos en el período
+        pedidos = Pedido.query.filter(
+            and_(
+                func.date(Pedido.fecha_pedido) >= inicio_fecha,
+                func.date(Pedido.fecha_pedido) <= fin_fecha,
+                Pedido.estado.in_(['confirmado', 'entregado'])
+            )
+        ).all()
+        
+        # Calcular métricas
+        total_ingresos = sum(p.total for p in pedidos) if pedidos else 0
+        total_mensajeria = sum(p.precio_mensajeria for p in pedidos) if pedidos else 0
+        
+        # Costo de productos vendidos
+        costo_productos = 0
+        for pedido in pedidos:
+            for item in pedido.items:
+                if item.producto:
+                    costo_productos += item.producto.costo * item.cantidad
+        
+        # Ganancia bruta y neta
+        ganancia_bruta = total_ingresos - costo_productos
+        ganancia_neta = ganancia_bruta - total_mensajeria  # Simplificado, se pueden añadir más gastos
+        
+        # Ventas por producto
+        ventas_por_producto = defaultdict(lambda: {'cantidad': 0, 'ingresos': 0, 'costo': 0})
+        for pedido in pedidos:
+            for item in pedido.items:
+                if item.producto:
+                    ventas_por_producto[item.producto.nombre]['cantidad'] += item.cantidad
+                    ventas_por_producto[item.producto.nombre]['ingresos'] += item.subtotal
+                    ventas_por_producto[item.producto.nombre]['costo'] += item.producto.costo * item.cantidad
+        
+        # Ventas por día
+        ventas_por_dia = defaultdict(float)
+        for pedido in pedidos:
+            dia = pedido.fecha_pedido.strftime('%Y-%m-%d')
+            ventas_por_dia[dia] += pedido.total
+        
+        # Métricas por zona
+        ventas_por_zona = defaultdict(float)
+        for pedido in pedidos:
+            zona = f"{pedido.cliente_municipio} - {pedido.cliente_reparto}"
+            ventas_por_zona[zona] += pedido.total
+        
+        return {
+            'periodo': {
+                'inicio': inicio_fecha.strftime('%Y-%m-%d'),
+                'fin': fin_fecha.strftime('%Y-%m-%d'),
+            },
+            'resumen': {
+                'total_pedidos': len(pedidos),
+                'total_ingresos': total_ingresos,
+                'costo_productos': costo_productos,
+                'total_mensajeria': total_mensajeria,
+                'ganancia_bruta': ganancia_bruta,
+                'ganancia_neta': ganancia_neta,
+                'margen_ganancia': (ganancia_neta / total_ingresos * 100) if total_ingresos > 0 else 0
+            },
+            'ventas_por_producto': dict(ventas_por_producto),
+            'ventas_por_dia': dict(ventas_por_dia),
+            'ventas_por_zona': dict(ventas_por_zona)
+        }
+    except Exception as e:
+        print(f"Error en generar_informe_financiero: {e}")
+        # Devolver un informe vacío en caso de error
+        return {
+            'periodo': {
+                'inicio': inicio_fecha.strftime('%Y-%m-%d') if inicio_fecha else '',
+                'fin': fin_fecha.strftime('%Y-%m-%d') if fin_fecha else '',
+            },
+            'resumen': {
+                'total_pedidos': 0,
+                'total_ingresos': 0,
+                'costo_productos': 0,
+                'total_mensajeria': 0,
+                'ganancia_bruta': 0,
+                'ganancia_neta': 0,
+                'margen_ganancia': 0
+            },
+            'ventas_por_producto': {},
+            'ventas_por_dia': {},
+            'ventas_por_zona': {}
+        }
 
 def generar_grafico_ventas(periodo='mes'):
     """Genera un gráfico de ventas para el dashboard"""
@@ -683,6 +706,7 @@ def get_zonas_municipio(municipio):
         'precio': z.precio_mensajeria
     } for z in zonas])
 
+# Aproximadamente línea 340-400: Modifica la ruta /crear-pedido
 @app.route('/crear-pedido', methods=['POST'])
 def crear_pedido():
     try:
@@ -736,7 +760,33 @@ def crear_pedido():
         pedido.total = subtotal + pedido.precio_mensajeria
         
         # Actualizar cliente (nuevo método)
-        pedido.actualizar_cliente()
+        cliente = Cliente.query.filter_by(telefono=pedido.cliente_telefono).first()
+        
+        if not cliente:
+            cliente = Cliente(
+                nombre=pedido.cliente_nombre,
+                telefono=pedido.cliente_telefono,
+                direccion_calle=pedido.cliente_direccion_calle,
+                municipio=pedido.cliente_municipio,
+                reparto=pedido.cliente_reparto,
+                fecha_registro=datetime.utcnow(),
+                ultimo_pedido=pedido.fecha_pedido,
+                pedidos_completados=1,
+                total_gastado=pedido.total
+            )
+        else:
+            cliente.ultimo_pedido = pedido.fecha_pedido
+            cliente.pedidos_completados += 1
+            cliente.total_gastado += pedido.total
+            # Actualizar dirección si ha cambiado
+            if pedido.cliente_direccion_calle:
+                cliente.direccion_calle = pedido.cliente_direccion_calle
+            if pedido.cliente_municipio:
+                cliente.municipio = pedido.cliente_municipio
+            if pedido.cliente_reparto:
+                cliente.reparto = pedido.cliente_reparto
+        
+        db.session.add(cliente)
         
         db.session.commit()
         
@@ -752,8 +802,8 @@ def crear_pedido():
         
     except Exception as e:
         db.session.rollback()
+        print(f"Error en crear_pedido: {e}")
         return jsonify({'error': str(e)}), 500
-
 # ADMIN ROUTES
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -1126,27 +1176,49 @@ def reporte_financiero():
     # Si es GET, mostrar formulario
     return render_template('admin/reporte_financiero_form.html')
 
+# Aproximadamente línea 700-730: Corrige la ruta /admin/clientes
 @app.route('/admin/clientes')
 @login_required
 def admin_clientes():
-    analisis = analizar_clientes()
-    
-    # Para la plantilla, necesitamos la fecha actual para calcular días inactivos
-    now = datetime.now()
-    
-    # Obtener clientes totales si se solicita la pestaña "todos"
-    clientes_todos = []
-    if request.args.get('tab') == 'todos':
+    try:
+        # Obtener todos los clientes para la pestaña "todos"
         clientes_todos = Cliente.query.all()
-    
-    return render_template(
-        'admin/clientes.html',
-        clientes_frecuentes=analisis['clientes_frecuentes'],
-        clientes_inactivos=analisis['clientes_inactivos'],
-        clientes_todos=clientes_todos,
-        now=now
-    )
-
+        
+        # Clientes frecuentes (más de 3 pedidos)
+        clientes_frecuentes = Cliente.query.filter(
+            Cliente.pedidos_completados >= 3
+        ).order_by(Cliente.total_gastado.desc()).limit(10).all()
+        
+        # Clientes inactivos (sin pedidos en los últimos 2 meses)
+        dos_meses_atras = datetime.now() - timedelta(days=60)
+        clientes_inactivos = Cliente.query.filter(
+            and_(
+                Cliente.pedidos_completados > 0,
+                Cliente.ultimo_pedido < dos_meses_atras
+            )
+        ).all()
+        
+        # Para la plantilla, necesitamos la fecha actual para calcular días inactivos
+        now = datetime.now()
+        
+        return render_template(
+            'admin/clientes.html',
+            clientes_frecuentes=clientes_frecuentes,
+            clientes_inactivos=clientes_inactivos,
+            clientes_todos=clientes_todos,
+            now=now
+        )
+    except Exception as e:
+        print(f"Error en admin_clientes: {e}")
+        # En caso de error, devolver listas vacías
+        return render_template(
+            'admin/clientes.html',
+            clientes_frecuentes=[],
+            clientes_inactivos=[],
+            clientes_todos=[],
+            now=datetime.now(),
+            error=str(e)
+        )
 @app.route('/admin/inventario')
 @login_required
 def admin_inventario():
@@ -1160,6 +1232,56 @@ def admin_inventario():
         materias_primas=materias_primas,
         alertas=alertas
     )
+
+@app.route('/admin/producto/ajustar-stock', methods=['POST'])
+@login_required
+def ajustar_stock_producto():
+    try:
+        producto_id = request.form.get('producto_id')
+        nuevo_stock = request.form.get('nuevo_stock')
+        motivo = request.form.get('motivo_ajuste')
+        notas = request.form.get('notas_ajuste')
+        
+        producto = Producto.query.get_or_404(producto_id)
+        producto.stock = int(nuevo_stock)
+        
+        db.session.commit()
+        
+        return redirect(url_for('admin_inventario'))
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error ajustando stock: {e}")
+        return redirect(url_for('admin_inventario'))
+
+@app.route('/admin/materia-prima/editar', methods=['POST'])
+@login_required
+def editar_materia_prima():
+    try:
+        materia_prima_id = request.form.get('materia_prima_id')
+        nombre = request.form.get('nombre')
+        unidad = request.form.get('unidad')
+        stock = request.form.get('stock')
+        costo_unitario = request.form.get('costo_unitario')
+        proveedor = request.form.get('proveedor')
+        nivel_alerta = request.form.get('nivel_alerta')
+        notas = request.form.get('notas')
+        
+        materia_prima = MateriaPrima.query.get_or_404(materia_prima_id)
+        materia_prima.nombre = nombre
+        materia_prima.unidad = unidad
+        materia_prima.stock = float(stock)
+        materia_prima.costo_unitario = float(costo_unitario)
+        materia_prima.proveedor = proveedor
+        materia_prima.nivel_alerta = float(nivel_alerta)
+        materia_prima.notas = notas
+        
+        db.session.commit()
+        
+        return redirect(url_for('admin_inventario'))
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error editando materia prima: {e}")
+        return redirect(url_for('admin_inventario'))
 
 @app.route('/admin/recetas')
 @login_required
