@@ -29,6 +29,13 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 # Allowed extensions for images
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
+@app.template_filter('timedelta')
+def timedelta_filter(dt):
+    from datetime import datetime
+    if dt:
+        return (datetime.now() - dt).days
+    return 0
+
 # Fix Postgres URL if needed
 if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
     app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://')
