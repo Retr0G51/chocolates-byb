@@ -228,7 +228,9 @@
             <div style="background: var(--crema); padding: 15px; border-radius: 10px; text-align: center;">
                 <h4 style="color: var(--chocolate); margin-bottom: 10px;">Margen Promedio</h4>
                 <div style="font-size: 2rem; font-weight: bold; color: var(--chocolate);">
-                    {{ "%.1f"|format(productos|map(attribute='precio')|sum / productos|map(attribute='costo')|sum * 100 - 100) }}%
+                    {% set total_precio = productos|map(attribute='precio')|sum %}
+                    {% set total_costo = productos|map(attribute='costo')|sum %}
+                    {{ "%.1f"|format((total_precio - total_costo) / total_precio * 100 if total_precio > 0 else 0) }}%
                 </div>
             </div>
             <div style="background: var(--crema); padding: 15px; border-radius: 10px; text-align: center;">
