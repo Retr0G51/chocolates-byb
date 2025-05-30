@@ -26,17 +26,21 @@
 </head>
 <body>
     <div class="admin-layout">
-        <aside class="sidebar">
-            <h2>🍫 Admin Panel</h2>
-            <ul class="sidebar-menu">
-                <li><a href="/admin">📊 Dashboard</a></li>
-                <li><a href="/admin/pedidos">📦 Pedidos</a></li>
-                <li><a href="/admin/productos">🍫 Productos</a></li>
-                <li><a href="/admin/zonas">📍 Zonas</a></li>
-                <li><a href="/logout">🚪 Salir</a></li>
-            </ul>
-        </aside>
-
+       <aside class="sidebar">
+    <h2>🍫 Admin Panel</h2>
+    <ul class="sidebar-menu">
+        <li><a href="/admin">📊 Dashboard</a></li>
+        <li><a href="/admin/pedidos">📦 Pedidos</a></li>
+        <li><a href="/admin/productos">🍫 Productos</a></li>
+        <li><a href="/admin/zonas">📍 Zonas de Entrega</a></li>
+        <li><a href="/admin/financiero">💰 Financiero</a></li>
+        <li><a href="/admin/inventario">📦 Inventario</a></li>
+        <li><a href="/admin/clientes">👥 Clientes</a></li>
+        <li><a href="/admin/recetas">📝 Recetas</a></li>
+        <li><a href="/" target="_blank">🌐 Ver Tienda</a></li>
+        <li><a href="/logout">🚪 Salir</a></li>
+    </ul>
+</aside>
         <main class="main-content">
             <h1>{{ 'Editar' if producto else 'Nuevo' }} Producto</h1>
             
@@ -83,13 +87,32 @@
                     
                     <div class="form-group">
                         <label>Precio (CUP)</label>
-                        <input type="number" step="0.01" name="precio" value="{{ producto.precio if producto else '' }}" required>
+                        <input type="number" step="0.01" name="precio" id="precio" value="{{ producto.precio if producto else '' }}" required>
                     </div>
+
                     <div class="form-group">
                         <label>Costo de Producción (CUP)</label>
-                        <input type="number" step="0.01" name="costo" value="{{ producto.costo if producto else '0' }}" required>
+                        <input type="number" step="0.01" name="costo" id="costo" value="{{ producto.costo if producto else '0' }}" required>
                         <small style="color: #666;">El costo se usa para calcular las ganancias</small>
                     </div>
+
+                    <div class="form-group" id="analisis-rentabilidad" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: {% if producto %}block{% else %}none{% endif %};">
+                        <h4 style="color: var(--chocolate); margin-bottom: 10px;">Análisis de Rentabilidad</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="font-weight: normal;">Ganancia por unidad:</label>
+                    <div id="ganancia-valor" style="font-size: 1.2rem; font-weight: bold;">0 CUP</div>
+                    </div>
+                    <div>
+                        <label style="font-weight: normal;">Margen de ganancia:</label>
+                        <div id="margen-valor" style="font-size: 1.2rem; font-weight: bold;">0%</div>
+                    </div>
+                    </div>
+                    <div style="margin-top: 10px;">
+                    <div id="margen-mensaje" style="color: #666;"></div>
+                    </div>
+                    </div
+
                     <div class="form-group">
                         <label>Stock</label>
                         <input type="number" name="stock" value="{{ producto.stock if producto else '50' }}" required>
@@ -114,5 +137,50 @@
             </div>
         </main>
     </div>
+  <!-- Script para calcular la rentabilidad en tiempo real -->
+<script>
+    function calcularRentabilidad() {
+        const precio = parseFloat(document.getElementById('precio').value) || 0;
+        const costo = parseFloat(document.getElementById('costo').value) || 0;
+        
+        if (precio > 0 && costo >= 0) {
+            const ganancia = precio - costo;
+            const margen = (ganancia / precio) * 100;
+            
+            document.getElementById('ganancia-valor').textContent = ganancia.toFixed(2) + ' CUP';
+            document.getElementById('margen-valor').textContent = margen.toFixed(1) + '%';
+            
+            let mensaje = '';
+            let colorMargen = '';
+            
+            if (margen < 20) {
+                mensaje = 'ALERTA: Margen muy bajo. Se recomienda revisar el precio o reducir costos.';
+                colorMargen = '#dc3545'; // rojo
+            } else if (margen < 30) {
+                mensaje = 'Margen bajo. Considere aumentar el precio.';
+                colorMargen = '#ffc107'; // amarillo
+            } else if (margen > 70) {
+                mensaje = 'Margen excelente. Producto altamente rentable.';
+                colorMargen = '#28a745'; // verde
+            } else {
+                mensaje = 'Margen adecuado.';
+                colorMargen = '#28a745'; // verde
+            }
+            
+            document.getElementById('margen-mensaje').textContent = mensaje;
+            document.getElementById('margen-valor').style.color = colorMargen;
+            document.getElementById('analisis-rentabilidad').style.display = 'block';
+        } else {
+            document.getElementById('analisis-rentabilidad').style.display = 'none';
+        }
+    }
+    
+    // Agregar event listeners para recalcular cuando cambian los valores
+    document.getElementById('precio').addEventListener('input', calcularRentabilidad);
+    document.getElementById('costo').addEventListener('input', calcularRentabilidad);
+    
+    // Calcular al cargar la página
+    document.addEventListener('DOMContentLoaded', calcularRentabilidad);
+</script>
 </body>
 </html>
