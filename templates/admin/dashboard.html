@@ -35,16 +35,20 @@
 <body>
     <div class="admin-layout">
         <aside class="sidebar">
-            <h2>🍫 Admin Panel</h2>
-            <ul class="sidebar-menu">
-                <li><a href="/admin" class="active">📊 Dashboard</a></li>
-                <li><a href="/admin/pedidos">📦 Pedidos</a></li>
-                <li><a href="/admin/productos">🍫 Productos</a></li>
-                <li><a href="/admin/zonas">📍 Zonas de Entrega</a></li>
-                <li><a href="/" target="_blank">🌐 Ver Tienda</a></li>
-                <li><a href="/logout">🚪 Salir</a></li>
-            </ul>
-        </aside>
+    <h2>🍫 Admin Panel</h2>
+    <ul class="sidebar-menu">
+        <li><a href="/admin" class="active">📊 Dashboard</a></li>
+        <li><a href="/admin/pedidos">📦 Pedidos</a></li>
+        <li><a href="/admin/productos">🍫 Productos</a></li>
+        <li><a href="/admin/zonas">📍 Zonas de Entrega</a></li>
+        <li><a href="/admin/financiero">💰 Financiero</a></li>
+        <li><a href="/admin/inventario">📦 Inventario</a></li>
+        <li><a href="/admin/clientes">👥 Clientes</a></li>
+        <li><a href="/admin/recetas">📝 Recetas</a></li>
+        <li><a href="/" target="_blank">🌐 Ver Tienda</a></li>
+        <li><a href="/logout">🚪 Salir</a></li>
+    </ul>
+</aside>
 
         <main class="main-content">
             <div class="header">
@@ -59,38 +63,92 @@
                 </button>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card primary">
-                    <h4>Pedidos Hoy</h4>
-                    <div class="stat-number">{{ stats.pedidos_hoy }}</div>
-                    <p>Nuevos pedidos</p>
-                </div>
-                
-                <div class="stat-card success">
-                    <h4>Pedidos del Mes</h4>
-                    <div class="stat-number">{{ stats.pedidos_mes }}</div>
-                    <p>Total mensual</p>
-                </div>
-                
-                <div class="stat-card warning">
-                    <h4>Ingresos del Mes</h4>
-                    <div class="stat-number">${{ "%.0f"|format(stats.ingresos_mes) }}</div>
-                    <p>Total cobrado</p>
-                </div>
-                
-                <div class="stat-card success">
-                    <h4>Ganancia del Mes</h4>
-                    <div class="stat-number">${{ "%.0f"|format(stats.ganancia_mes) }}</div>
-                    <p>Beneficio neto</p>
-                </div>
-                
-                <div class="stat-card primary">
-                    <h4>Producto Estrella</h4>
-                    <div style="font-size: 1.5rem; font-weight: bold; margin: 10px 0;">{{ stats.producto_top }}</div>
-                    <p>Más vendido</p>
-                </div>
-            </div>
+            <!-- Modificar los stats-grid para incluir nuevas métricas -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <h4>Pedidos Hoy</h4>
+        <div class="stat-number">{{ stats.pedidos_hoy }}</div>
+        <p>Nuevos pedidos</p>
+    </div>
+    
+    <div class="stat-card success">
+        <h4>Pedidos del Mes</h4>
+        <div class="stat-number">{{ stats.pedidos_mes }}</div>
+        <p>Total mensual</p>
+    </div>
+    
+    <div class="stat-card warning">
+        <h4>Ingresos del Mes</h4>
+        <div class="stat-number">${{ "%.0f"|format(stats.ingresos_mes) }}</div>
+        <p>Total cobrado</p>
+    </div>
+    
+    <div class="stat-card success">
+        <h4>Ganancia del Mes</h4>
+        <div class="stat-number">${{ "%.0f"|format(stats.ganancia_mes) }}</div>
+        <p>Beneficio neto</p>
+    </div>
+    
+    <div class="stat-card primary">
+        <h4>Producto Estrella</h4>
+        <div style="font-size: 1.5rem; font-weight: bold; margin: 10px 0;">{{ stats.producto_top }}</div>
+        <p>Más vendido</p>
+    </div>
+    
+    <div class="stat-card warning">
+        <h4>Margen de Ganancia</h4>
+        <div class="stat-number">{{ "%.1f"|format(stats.margen_ganancia) }}%</div>
+        <p>Promedio mensual</p>
+    </div>
+</div>
 
+            <div style="margin-top: 30px; margin-bottom: 20px;">
+    <h3 style="color: var(--chocolate); margin-bottom: 15px;">Accesos Rápidos</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <a href="/admin/financiero" style="background: var(--chocolate); color: white; padding: 15px; border-radius: 10px; text-decoration: none; text-align: center; transition: all 0.3s;">
+            <i class="fas fa-chart-line" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+            Dashboard Financiero
+        </a>
+        <a href="/admin/inventario" style="background: var(--chocolate); color: white; padding: 15px; border-radius: 10px; text-decoration: none; text-align: center; transition: all 0.3s;">
+            <i class="fas fa-boxes" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+            Gestión de Inventario
+        </a>
+        <a href="/admin/clientes" style="background: var(--chocolate); color: white; padding: 15px; border-radius: 10px; text-decoration: none; text-align: center; transition: all 0.3s;">
+            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+            CRM Clientes
+        </a>
+        <a href="/admin/recetas" style="background: var(--chocolate); color: white; padding: 15px; border-radius: 10px; text-decoration: none; text-align: center; transition: all 0.3s;">
+            <i class="fas fa-book" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+            Recetas y Costos
+        </a>
+    </div>
+</div>
+
+            <div class="data-table" style="margin-top: 30px;">
+    <h3 style="background: var(--chocolate); color: white; padding: 15px 20px;">⚠️ Alertas del Sistema</h3>
+    <div style="padding: 20px;">
+        {% if stats.alertas_inventario %}
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 10px; color: #856404;">
+            <strong>Alerta de Inventario:</strong> {{ stats.alertas_inventario }} productos con stock bajo.
+            <a href="/admin/inventario" style="margin-left: 10px; color: #0056b3;">Ver detalles</a>
+        </div>
+        {% endif %}
+        
+        {% if stats.alertas_margen %}
+        <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin-bottom: 10px; color: #721c24;">
+            <strong>Alerta de Rentabilidad:</strong> {{ stats.alertas_margen }} productos con margen inferior al 30%.
+            <a href="/admin/recetas" style="margin-left: 10px; color: #0056b3;">Ver detalles</a>
+        </div>
+        {% endif %}
+        
+        {% if not stats.alertas_inventario and not stats.alertas_margen %}
+        <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 15px; color: #155724;">
+            <strong>¡Todo en orden!</strong> No hay alertas activas en este momento.
+        </div>
+        {% endif %}
+    </div>
+</div>
+            
             <div class="data-table">
                 <h3>Pedidos Recientes</h3>
                 <table>
