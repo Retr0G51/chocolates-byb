@@ -1,0 +1,618 @@
+{% extends "base.html" %}
+
+{% block title %}Catálogo{% endblock %}
+
+{% block content %}
+<!-- Encabezado del catálogo -->
+<section class="page-header">
+    <div class="container">
+        <h1 class="page-title">Nuestro Catálogo</h1>
+        <p class="page-subtitle">Elige tus chocolates favoritos y haz tu pedido</p>
+    </div>
+</section>
+
+<!-- Formulario de pedido -->
+<section class="catalog-section">
+    <div class="container">
+        <form id="orderForm" action="{{ url_for('realizar_pedido') }}" method="POST" class="order-form">
+            <!-- Sección de productos -->
+            <div class="products-section">
+                <h2 class="section-title">1. Selecciona tus chocolates</h2>
+                
+                <!-- Chocolates Oscuros -->
+                <div class="product-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-circle chocolate-icon-dark"></i> Chocolate Oscuro
+                    </h3>
+                    <p class="category-description">70% cacao puro - Intenso y sofisticado</p>
+                    
+                    <div class="products-grid">
+                        {% for producto in productos_por_tipo['oscuro'] %}
+                        <div class="product-card" data-product-id="{{ producto.id }}">
+                            <div class="product-image-container">
+                                <div class="product-image chocolate-dark-bg">
+                                    <i class="fas fa-award product-quality-badge"></i>
+                                </div>
+                            </div>
+                            <div class="product-details">
+                                <h4 class="product-name">{{ producto.nombre }}</h4>
+                                <p class="product-size">{{ producto.tamano|title }} - {{ producto.peso_gramos }}g</p>
+                                <p class="product-price">{{ producto.precio|int }} {{ currency }}</p>
+                                
+                                <div class="product-selection">
+                                    <input type="checkbox" 
+                                           id="producto_{{ producto.id }}" 
+                                           name="productos" 
+                                           value="{{ producto.id }}"
+                                           class="product-checkbox"
+                                           data-price="{{ producto.precio }}"
+                                           data-name="{{ producto.nombre }} {{ producto.tamano|title }}">
+                                    <label for="producto_{{ producto.id }}" class="product-label">
+                                        Seleccionar
+                                    </label>
+                                    
+                                    <div class="quantity-selector" style="display: none;">
+                                        <button type="button" class="qty-btn qty-minus" data-product="{{ producto.id }}">-</button>
+                                        <input type="number" 
+                                               name="cantidad_{{ producto.id }}" 
+                                               id="cantidad_{{ producto.id }}"
+                                               class="qty-input" 
+                                               value="1" 
+                                               min="1" 
+                                               max="20"
+                                               data-product="{{ producto.id }}">
+                                        <button type="button" class="qty-btn qty-plus" data-product="{{ producto.id }}">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Chocolates con Leche -->
+                <div class="product-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-circle chocolate-icon-milk"></i> Chocolate con Leche
+                    </h3>
+                    <p class="category-description">Suave y cremoso - El favorito de todos</p>
+                    
+                    <div class="products-grid">
+                        {% for producto in productos_por_tipo['leche'] %}
+                        <div class="product-card" data-product-id="{{ producto.id }}">
+                            <div class="product-image-container">
+                                <div class="product-image chocolate-milk-bg">
+                                    <i class="fas fa-heart product-quality-badge"></i>
+                                </div>
+                            </div>
+                            <div class="product-details">
+                                <h4 class="product-name">{{ producto.nombre }}</h4>
+                                <p class="product-size">{{ producto.tamano|title }} - {{ producto.peso_gramos }}g</p>
+                                <p class="product-price">{{ producto.precio|int }} {{ currency }}</p>
+                                
+                                <div class="product-selection">
+                                    <input type="checkbox" 
+                                           id="producto_{{ producto.id }}" 
+                                           name="productos" 
+                                           value="{{ producto.id }}"
+                                           class="product-checkbox"
+                                           data-price="{{ producto.precio }}"
+                                           data-name="{{ producto.nombre }} {{ producto.tamano|title }}">
+                                    <label for="producto_{{ producto.id }}" class="product-label">
+                                        Seleccionar
+                                    </label>
+                                    
+                                    <div class="quantity-selector" style="display: none;">
+                                        <button type="button" class="qty-btn qty-minus" data-product="{{ producto.id }}">-</button>
+                                        <input type="number" 
+                                               name="cantidad_{{ producto.id }}" 
+                                               id="cantidad_{{ producto.id }}"
+                                               class="qty-input" 
+                                               value="1" 
+                                               min="1" 
+                                               max="20"
+                                               data-product="{{ producto.id }}">
+                                        <button type="button" class="qty-btn qty-plus" data-product="{{ producto.id }}">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Chocolates Blancos -->
+                <div class="product-category">
+                    <h3 class="category-title">
+                        <i class="fas fa-circle chocolate-icon-white"></i> Chocolate Blanco
+                    </h3>
+                    <p class="category-description">Dulce y delicado - Pura felicidad</p>
+                    
+                    <div class="products-grid">
+                        {% for producto in productos_por_tipo['blanco'] %}
+                        <div class="product-card" data-product-id="{{ producto.id }}">
+                            <div class="product-image-container">
+                                <div class="product-image chocolate-white-bg">
+                                    <i class="fas fa-star product-quality-badge"></i>
+                                </div>
+                            </div>
+                            <div class="product-details">
+                                <h4 class="product-name">{{ producto.nombre }}</h4>
+                                <p class="product-size">{{ producto.tamano|title }} - {{ producto.peso_gramos }}g</p>
+                                <p class="product-price">{{ producto.precio|int }} {{ currency }}</p>
+                                
+                                <div class="product-selection">
+                                    <input type="checkbox" 
+                                           id="producto_{{ producto.id }}" 
+                                           name="productos" 
+                                           value="{{ producto.id }}"
+                                           class="product-checkbox"
+                                           data-price="{{ producto.precio }}"
+                                           data-name="{{ producto.nombre }} {{ producto.tamano|title }}">
+                                    <label for="producto_{{ producto.id }}" class="product-label">
+                                        Seleccionar
+                                    </label>
+                                    
+                                    <div class="quantity-selector" style="display: none;">
+                                        <button type="button" class="qty-btn qty-minus" data-product="{{ producto.id }}">-</button>
+                                        <input type="number" 
+                                               name="cantidad_{{ producto.id }}" 
+                                               id="cantidad_{{ producto.id }}"
+                                               class="qty-input" 
+                                               value="1" 
+                                               min="1" 
+                                               max="20"
+                                               data-product="{{ producto.id }}">
+                                        <button type="button" class="qty-btn qty-plus" data-product="{{ producto.id }}">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección de extras -->
+            <div class="extras-section">
+                <h2 class="section-title">2. Agrega extras (opcional)</h2>
+                <div class="extras-grid">
+                    <div class="extra-item">
+                        <input type="checkbox" id="bolsa_regalo" name="bolsa_regalo" class="extra-checkbox" data-price="200">
+                        <label for="bolsa_regalo" class="extra-label">
+                            <i class="fas fa-gift"></i>
+                            <span class="extra-name">Bolsa de Regalo</span>
+                            <span class="extra-price">+200 {{ currency }}</span>
+                        </label>
+                    </div>
+                    
+                    <div class="extra-item">
+                        <input type="checkbox" id="tarjeta" name="tarjeta" class="extra-checkbox" data-price="150">
+                        <label for="tarjeta" class="extra-label">
+                            <i class="fas fa-envelope"></i>
+                            <span class="extra-name">Tarjeta Personalizada</span>
+                            <span class="extra-price">+150 {{ currency }}</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sección de información de entrega -->
+            <div class="delivery-section">
+                <h2 class="section-title">3. Información de entrega</h2>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nombre">Nombre completo *</label>
+                        <input type="text" id="nombre" name="nombre" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="telefono">Teléfono *</label>
+                        <input type="tel" id="telefono" name="telefono" class="form-control" 
+                               placeholder="+53 5XXXXXXX" required>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="direccion">Dirección completa *</label>
+                        <input type="text" id="direccion" name="direccion" class="form-control" 
+                               placeholder="Calle, número, entre calles, reparto" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="municipio">Municipio *</label>
+                        <select id="municipio" name="municipio" class="form-control" required>
+                            <option value="">Selecciona un municipio</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="zona">Zona/Reparto *</label>
+                        <select id="zona" name="zona" class="form-control" required disabled>
+                            <option value="">Primero selecciona un municipio</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fecha_entrega">Fecha de entrega *</label>
+                        <input type="date" id="fecha_entrega" name="fecha_entrega" 
+                               class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="horario_entrega">Horario de entrega *</label>
+                        <select id="horario_entrega" name="horario_entrega" class="form-control" required>
+                            <option value="">Selecciona un horario</option>
+                            <option value="8:00-12:00">Mañana (8:00 AM - 12:00 PM)</option>
+                            <option value="12:00-17:00">Tarde (12:00 PM - 5:00 PM)</option>
+                            <option value="17:00-21:00">Noche (5:00 PM - 9:00 PM)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="observaciones">Observaciones (opcional)</label>
+                        <textarea id="observaciones" name="observaciones" class="form-control" 
+                                  rows="3" placeholder="Instrucciones especiales, dedicatoria, etc."></textarea>
+                    </div>
+                </div>
+                
+                <!-- Información de costo de envío -->
+                <div class="delivery-cost-info" id="deliveryCostInfo" style="display: none;">
+                    <i class="fas fa-truck"></i>
+                    <span>Costo de envío: <strong id="deliveryCost">0</strong> {{ currency }}</span>
+                </div>
+            </div>
+            
+            <!-- Resumen del pedido (lateral o inferior) -->
+            <div class="order-summary-section">
+                <div class="order-summary">
+                    <h3 class="summary-title">Resumen del pedido</h3>
+                    
+                    <div class="summary-items" id="summaryItems">
+                        <p class="empty-cart">No has seleccionado ningún producto</p>
+                    </div>
+                    
+                    <div class="summary-totals">
+                        <div class="summary-line">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">0 {{ currency }}</span>
+                        </div>
+                        <div class="summary-line">
+                            <span>Extras:</span>
+                            <span id="extrasTotal">0 {{ currency }}</span>
+                        </div>
+                        <div class="summary-line">
+                            <span>Envío:</span>
+                            <span id="shippingTotal">0 {{ currency }}</span>
+                        </div>
+                        <div class="summary-line total">
+                            <span>Total:</span>
+                            <span id="orderTotal">0 {{ currency }}</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitOrder" disabled>
+                        <i class="fas fa-check-circle"></i> Confirmar Pedido
+                    </button>
+                    
+                    <p class="payment-note">
+                        <i class="fas fa-info-circle"></i> 
+                        El pago se realiza en efectivo al momento de la entrega
+                    </p>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- Modal de confirmación antes de enviar -->
+<div class="modal" id="confirmModal">
+    <div class="modal-content">
+        <h3>Confirmar pedido</h3>
+        <p>¿Estás seguro de que deseas enviar este pedido?</p>
+        <p class="modal-total">Total a pagar: <strong id="modalTotal"></strong></p>
+        <div class="modal-buttons">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Revisar</button>
+            <button type="button" class="btn btn-primary" onclick="submitFinalOrder()">Confirmar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos para el catálogo */
+    .chocolate-icon-dark { color: #3e2723; }
+    .chocolate-icon-milk { color: #8d6e63; }
+    .chocolate-icon-white { color: #efebe9; border: 1px solid #ddd; border-radius: 50%; }
+    
+    .chocolate-dark-bg { background: linear-gradient(135deg, #3e2723, #5d4037); }
+    .chocolate-milk-bg { background: linear-gradient(135deg, #8d6e63, #a1887f); }
+    .chocolate-white-bg { background: linear-gradient(135deg, #fafafa, #efebe9); }
+    
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 30px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 500px;
+        text-align: center;
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+        from { transform: translateY(-50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables globales
+let municipiosZonas = {};
+let costoEnvio = 0;
+
+// Cargar municipios y zonas al inicio
+document.addEventListener('DOMContentLoaded', function() {
+    cargarMunicipiosZonas();
+    configurarFechaMinima();
+    configurarEventListeners();
+});
+
+// Cargar estructura de municipios y zonas desde el servidor
+async function cargarMunicipiosZonas() {
+    try {
+        const response = await fetch('/api/municipios-zonas');
+        municipiosZonas = await response.json();
+        
+        // Poblar el select de municipios
+        const municipioSelect = document.getElementById('municipio');
+        Object.keys(municipiosZonas).forEach(municipio => {
+            const option = document.createElement('option');
+            option.value = municipio;
+            option.textContent = municipio;
+            municipioSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error cargando municipios:', error);
+    }
+}
+
+// Configurar fecha mínima (mañana)
+function configurarFechaMinima() {
+    const fechaInput = document.getElementById('fecha_entrega');
+    const mañana = new Date();
+    mañana.setDate(mañana.getDate() + 1);
+    fechaInput.min = mañana.toISOString().split('T')[0];
+}
+
+// Configurar todos los event listeners
+function configurarEventListeners() {
+    // Checkboxes de productos
+    document.querySelectorAll('.product-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const productCard = this.closest('.product-card');
+            const quantitySelector = productCard.querySelector('.quantity-selector');
+            
+            if (this.checked) {
+                quantitySelector.style.display = 'flex';
+                productCard.classList.add('selected');
+            } else {
+                quantitySelector.style.display = 'none';
+                productCard.classList.remove('selected');
+            }
+            
+            actualizarResumen();
+        });
+    });
+    
+    // Botones de cantidad
+    document.querySelectorAll('.qty-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.product;
+            const input = document.getElementById(`cantidad_${productId}`);
+            const currentValue = parseInt(input.value);
+            
+            if (this.classList.contains('qty-minus') && currentValue > 1) {
+                input.value = currentValue - 1;
+            } else if (this.classList.contains('qty-plus') && currentValue < 20) {
+                input.value = currentValue + 1;
+            }
+            
+            actualizarResumen();
+        });
+    });
+    
+    // Inputs de cantidad
+    document.querySelectorAll('.qty-input').forEach(input => {
+        input.addEventListener('change', actualizarResumen);
+    });
+    
+    // Checkboxes de extras
+    document.querySelectorAll('.extra-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', actualizarResumen);
+    });
+    
+    // Select de municipio
+    document.getElementById('municipio').addEventListener('change', function() {
+        const zonaSelect = document.getElementById('zona');
+        zonaSelect.innerHTML = '<option value="">Selecciona una zona</option>';
+        
+        if (this.value) {
+            zonaSelect.disabled = false;
+            const zonas = municipiosZonas[this.value];
+            
+            // Si el municipio tiene "Todo" o "todas", es una sola zona
+            if (zonas.Todo || zonas.todas) {
+                const option = document.createElement('option');
+                option.value = 'Todo';
+                option.textContent = 'Todo el municipio';
+                zonaSelect.appendChild(option);
+            } else {
+                // Agregar cada zona
+                Object.keys(zonas).forEach(zona => {
+                    if (zonas[zona] !== "NO") {
+                        const option = document.createElement('option');
+                        option.value = zona;
+                        option.textContent = zona;
+                        zonaSelect.appendChild(option);
+                    }
+                });
+            }
+        } else {
+            zonaSelect.disabled = true;
+        }
+        
+        // Resetear costo de envío
+        costoEnvio = 0;
+        document.getElementById('deliveryCostInfo').style.display = 'none';
+        actualizarResumen();
+    });
+    
+    // Select de zona
+    document.getElementById('zona').addEventListener('change', async function() {
+        if (this.value) {
+            await calcularCostoEnvio();
+        }
+    });
+    
+    // Formulario submit
+    document.getElementById('orderForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validaciones adicionales
+        const productosSeleccionados = document.querySelectorAll('.product-checkbox:checked');
+        if (productosSeleccionados.length === 0) {
+            alert('Por favor selecciona al menos un producto');
+            return;
+        }
+        
+        // Mostrar modal de confirmación
+        const total = document.getElementById('orderTotal').textContent;
+        document.getElementById('modalTotal').textContent = total;
+        document.getElementById('confirmModal').style.display = 'block';
+    });
+}
+
+// Calcular costo de envío
+async function calcularCostoEnvio() {
+    const municipio = document.getElementById('municipio').value;
+    const zona = document.getElementById('zona').value;
+    
+    if (!municipio || !zona) return;
+    
+    try {
+        const response = await fetch('/api/calcular-mensajeria', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ municipio, zona })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            costoEnvio = data.costo;
+            document.getElementById('deliveryCost').textContent = costoEnvio;
+            document.getElementById('deliveryCostInfo').style.display = 'flex';
+        } else {
+            alert(data.message);
+            costoEnvio = 0;
+        }
+        
+        actualizarResumen();
+    } catch (error) {
+        console.error('Error calculando costo de envío:', error);
+    }
+}
+
+// Actualizar resumen del pedido
+function actualizarResumen() {
+    const summaryItems = document.getElementById('summaryItems');
+    const submitButton = document.getElementById('submitOrder');
+    let subtotal = 0;
+    let extrasTotal = 0;
+    let itemsHtml = '';
+    let hayProductos = false;
+    
+    // Calcular productos seleccionados
+    document.querySelectorAll('.product-checkbox:checked').forEach(checkbox => {
+        hayProductos = true;
+        const productId = checkbox.value;
+        const productName = checkbox.dataset.name;
+        const price = parseFloat(checkbox.dataset.price);
+        const quantity = parseInt(document.getElementById(`cantidad_${productId}`).value);
+        const itemTotal = price * quantity;
+        
+        subtotal += itemTotal;
+        itemsHtml += `
+            <div class="summary-item">
+                <span>${productName} x${quantity}</span>
+                <span>${itemTotal} {{ currency }}</span>
+            </div>
+        `;
+    });
+    
+    // Calcular extras
+    document.querySelectorAll('.extra-checkbox:checked').forEach(checkbox => {
+        const price = parseFloat(checkbox.dataset.price);
+        extrasTotal += price;
+    });
+    
+    // Actualizar HTML
+    if (hayProductos) {
+        summaryItems.innerHTML = itemsHtml;
+        submitButton.disabled = false;
+    } else {
+        summaryItems.innerHTML = '<p class="empty-cart">No has seleccionado ningún producto</p>';
+        submitButton.disabled = true;
+    }
+    
+    // Actualizar totales
+    const total = subtotal + extrasTotal + costoEnvio;
+    document.getElementById('subtotal').textContent = `${subtotal} {{ currency }}`;
+    document.getElementById('extrasTotal').textContent = `${extrasTotal} {{ currency }}`;
+    document.getElementById('shippingTotal').textContent = `${costoEnvio} {{ currency }}`;
+    document.getElementById('orderTotal').textContent = `${total} {{ currency }}`;
+}
+
+// Cerrar modal
+function closeModal() {
+    document.getElementById('confirmModal').style.display = 'none';
+}
+
+// Enviar pedido final
+function submitFinalOrder() {
+    document.getElementById('orderForm').submit();
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    const modal = document.getElementById('confirmModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
