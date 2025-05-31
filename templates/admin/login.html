@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}Acceso Administrativo{% endblock %}
+
+{% block content %}
+<!-- Sección de login administrativo -->
+<section class="admin-login-section">
+    <div class="container">
+        <div class="login-wrapper">
+            <!-- Tarjeta de login -->
+            <div class="login-card">
+                <!-- Encabezado con icono -->
+                <div class="login-header">
+                    <div class="admin-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h1 class="login-title">Panel Administrativo</h1>
+                    <p class="login-subtitle">Ingresa tus credenciales para acceder</p>
+                </div>
+                
+                <!-- Formulario de login -->
+                <form method="POST" action="{{ url_for('admin_login') }}" class="login-form" id="loginForm">
+                    <!-- Campo de usuario -->
+                    <div class="form-group">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user"></i> Usuario
+                        </label>
+                        <input type="text" 
+                               id="username" 
+                               name="username" 
+                               class="form-control login-input" 
+                               placeholder="Ingresa tu usuario"
+                               required 
+                               autofocus
+                               autocomplete="username">
+                        <span class="input-focus-effect"></span>
+                    </div>
+                    
+                    <!-- Campo de contraseña -->
+                    <div class="form-group">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i> Contraseña
+                        </label>
+                        <div class="password-input-wrapper">
+                            <input type="password" 
+                                   id="password" 
+                                   name="password" 
+                                   class="form-control login-input" 
+                                   placeholder="Ingresa tu contraseña"
+                                   required
+                                   autocomplete="current-password">
+                            <button type="button" class="password-toggle" id="passwordToggle" title="Mostrar contraseña">
+                                <i class="fas fa-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                        <span class="input-focus-effect"></span>
+                    </div>
+                    
+                    <!-- Botón de login -->
+                    <button type="submit" class="btn btn-primary btn-login" id="loginButton">
+                        <span class="btn-text">Iniciar Sesión</span>
+                        <span class="btn-loading" style="display: none;">
+                            <i class="fas fa-spinner fa-spin"></i> Verificando...
+                        </span>
+                    </button>
+                </form>
+                
+                <!-- Enlaces adicionales -->
+                <div class="login-footer">
+                    <p class="security-note">
+                        <i class="fas fa-shield-alt"></i> 
+                        Conexión segura - Solo personal autorizado
+                    </p>
+                    <a href="{{ url_for('index') }}" class="back-link">
+                        <i class="fas fa-arrow-left"></i> Volver a la tienda
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Información lateral (solo en pantallas grandes) -->
+            <div class="login-info">
+                <h2>Bienvenido al Centro de Control</h2>
+                <p>Desde aquí podrás gestionar todos los aspectos de tu negocio:</p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> Gestionar pedidos y clientes</li>
+                    <li><i class="fas fa-check-circle"></i> Control de finanzas y comisiones</li>
+                    <li><i class="fas fa-check-circle"></i> Administrar trabajadores</li>
+                    <li><i class="fas fa-check-circle"></i> Ver estadísticas detalladas</li>
+                    <li><i class="fas fa-check-circle"></i> Configurar productos y precios</li>
+                </ul>
+                
+                <div class="help-section">
+                    <h3>¿Necesitas ayuda?</h3>
+                    <p>Si olvidaste tus credenciales o tienes problemas para acceder, contacta al administrador del sistema.</p>
+                    <a href="https://wa.me/5363661888?text=Necesito%20ayuda%20con%20el%20acceso%20al%20panel%20administrativo" 
+                       target="_blank" 
+                       class="help-link">
+                        <i class="fab fa-whatsapp"></i> Solicitar ayuda
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Indicador de Caps Lock -->
+<div class="caps-lock-warning" id="capsLockWarning" style="display: none;">
+    <i class="fas fa-exclamation-triangle"></i> Bloq Mayús está activado
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Fondo especial para la página de login */
+    .admin-login-section {
+        min-height: calc(100vh - 200px);
+        background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+        display: flex;
+        align-items: center;
+        padding: 40px 0;
+    }
+    
+    /* Animación de entrada */
+    .login-card {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Efecto de enfoque personalizado */
+    .form-group {
+        position: relative;
+        margin-bottom: 25px;
+    }
+    
+    .input-focus-effect {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background-color: var(--primary-color);
+        transition: width 0.3s ease;
+    }
+    
+    .login-input:focus ~ .input-focus-effect {
+        width: 100%;
+    }
+    
+    /* Indicador de Caps Lock */
+    .caps-lock-warning {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #ff9800;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        animation: slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+        }
+        to {
+            transform: translateX(0);
+        }
+    }
+    
+    /* Efecto de shake para errores */
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    
+    .shake {
+        animation: shake 0.5s ease-in-out;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Función para detectar Caps Lock
+function detectCapsLock(event) {
+    const capsLockWarning = document.getElementById('capsLockWarning');
+    
+    // Detectar si Caps Lock está activado
+    if (event.getModifierState && event.getModifierState('CapsLock')) {
+        capsLockWarning.style.display = 'block';
+    } else {
+        capsLockWarning.style.display = 'none';
+    }
+}
+
+// Función para alternar visibilidad de la contraseña
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.className = 'fas fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.className = 'fas fa-eye';
+    }
+}
+
+// Función para manejar el envío del formulario
+function handleFormSubmit(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const button = document.getElementById('loginButton');
+    const btnText = button.querySelector('.btn-text');
+    const btnLoading = button.querySelector('.btn-loading');
+    
+    // Validar campos vacíos
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    
+    if (!username || !password) {
+        form.classList.add('shake');
+        setTimeout(() => form.classList.remove('shake'), 500);
+        return;
+    }
+    
+    // Mostrar estado de carga
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'inline-block';
+    button.disabled = true;
+    
+    // Simular un pequeño retraso para mejor UX (evita que parezca instantáneo)
+    setTimeout(() => {
+        form.submit();
+    }, 500);
+}
+
+// Configurar event listeners cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    // Detectar Caps Lock en el campo de contraseña
+    const passwordInput = document.getElementById('password');
+    passwordInput.addEventListener('keyup', detectCapsLock);
+    passwordInput.addEventListener('keydown', detectCapsLock);
+    
+    // Toggle de visibilidad de contraseña
+    document.getElementById('passwordToggle').addEventListener('click', togglePasswordVisibility);
+    
+    // Manejar envío del formulario
+    document.getElementById('loginForm').addEventListener('submit', handleFormSubmit);
+    
+    // Auto-focus con efecto visual
+    const usernameInput = document.getElementById('username');
+    setTimeout(() => {
+        usernameInput.focus();
+        usernameInput.parentElement.querySelector('.input-focus-effect').style.width = '100%';
+        setTimeout(() => {
+            usernameInput.parentElement.querySelector('.input-focus-effect').style.width = '0';
+        }, 500);
+    }, 300);
+    
+    // Limpiar mensajes de error después de 5 segundos
+    const alerts = document.querySelectorAll('.alert');
+    if (alerts.length > 0) {
+        setTimeout(() => {
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+    }
+});
+
+// Prevenir que se envíe el formulario con Enter accidentalmente en campos vacíos
+document.addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        const activeElement = document.activeElement;
+        if (activeElement.tagName === 'INPUT' && activeElement.type !== 'submit') {
+            const form = activeElement.closest('form');
+            const inputs = Array.from(form.querySelectorAll('input:not([type="submit"])'));
+            const currentIndex = inputs.indexOf(activeElement);
+            
+            if (currentIndex < inputs.length - 1) {
+                event.preventDefault();
+                inputs[currentIndex + 1].focus();
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
