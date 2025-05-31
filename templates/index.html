@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<!-- Hero Section - La primera impresión cuenta -->
+<section class="hero">
+    <div class="hero-background">
+        <div class="hero-overlay"></div>
+    </div>
+    <div class="hero-content">
+        <div class="container">
+            <h1 class="hero-title animate-fade-in">Chocolates Artesanales ByB</h1>
+            <p class="hero-subtitle animate-fade-in-delay">El sabor auténtico del chocolate hecho con amor</p>
+            <div class="hero-buttons animate-fade-in-delay-2">
+                <a href="{{ url_for('catalogo') }}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-shopping-basket"></i> Ver Catálogo
+                </a>
+                <a href="#como-funciona" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-info-circle"></i> Cómo Funciona
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sección de características principales -->
+<section class="features">
+    <div class="container">
+        <h2 class="section-title">¿Por qué elegir Chocolates ByB?</h2>
+        <div class="features-grid">
+            <!-- Característica 1: Artesanal -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-hand-holding-heart"></i>
+                </div>
+                <h3>100% Artesanal</h3>
+                <p>Cada chocolate es elaborado a mano con técnicas tradicionales y los mejores ingredientes.</p>
+            </div>
+            
+            <!-- Característica 2: Entrega rápida -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-truck"></i>
+                </div>
+                <h3>Entrega a Domicilio</h3>
+                <p>Llevamos tu pedido hasta la puerta de tu casa en toda La Habana. ¡Comodidad garantizada!</p>
+            </div>
+            
+            <!-- Característica 3: Variedad -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chocolate"></i>
+                </div>
+                <h3>Gran Variedad</h3>
+                <p>Chocolate oscuro, con leche o blanco. Diferentes tamaños para cada ocasión especial.</p>
+            </div>
+            
+            <!-- Característica 4: Pedidos fáciles -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h3>Pedidos Fáciles</h3>
+                <p>Realiza tu pedido en minutos desde nuestra web. ¡Nosotros nos encargamos del resto!</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sección de productos destacados -->
+<section class="featured-products">
+    <div class="container">
+        <h2 class="section-title">Nuestros Chocolates</h2>
+        <p class="section-subtitle">Descubre nuestras deliciosas opciones</p>
+        
+        <div class="products-preview">
+            <!-- Chocolate Oscuro -->
+            <div class="product-preview-card">
+                <div class="product-image chocolate-dark">
+                    <i class="fas fa-award product-badge"></i>
+                </div>
+                <h3>Chocolate Oscuro</h3>
+                <p class="product-description">70% cacao puro, intenso y sofisticado</p>
+                <div class="product-info">
+                    <span class="product-price">Desde 950 {{ currency }}</span>
+                    <span class="product-weight">115g - 230g</span>
+                </div>
+            </div>
+            
+            <!-- Chocolate con Leche -->
+            <div class="product-preview-card">
+                <div class="product-image chocolate-milk">
+                    <i class="fas fa-heart product-badge"></i>
+                </div>
+                <h3>Chocolate con Leche</h3>
+                <p class="product-description">Suave y cremoso, el favorito de todos</p>
+                <div class="product-info">
+                    <span class="product-price">Desde 950 {{ currency }}</span>
+                    <span class="product-weight">115g - 230g</span>
+                </div>
+            </div>
+            
+            <!-- Chocolate Blanco -->
+            <div class="product-preview-card">
+                <div class="product-image chocolate-white">
+                    <i class="fas fa-star product-badge"></i>
+                </div>
+                <h3>Chocolate Blanco</h3>
+                <p class="product-description">Dulce y delicado, pura felicidad</p>
+                <div class="product-info">
+                    <span class="product-price">Desde 950 {{ currency }}</span>
+                    <span class="product-weight">115g - 230g</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center">
+            <a href="{{ url_for('catalogo') }}" class="btn btn-primary">
+                Ver Catálogo Completo <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Sección de cómo funciona -->
+<section class="how-it-works" id="como-funciona">
+    <div class="container">
+        <h2 class="section-title">¿Cómo hacer tu pedido?</h2>
+        <p class="section-subtitle">En solo 3 sencillos pasos</p>
+        
+        <div class="steps-container">
+            <!-- Paso 1 -->
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3>Elige tus chocolates</h3>
+                    <p>Explora nuestro catálogo y selecciona tus chocolates favoritos. Puedes elegir tipo, tamaño y cantidad.</p>
+                </div>
+            </div>
+            
+            <div class="step-connector"></div>
+            
+            <!-- Paso 2 -->
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3>Completa tu información</h3>
+                    <p>Indica tu dirección de entrega, fecha y horario preferido. ¡También puedes agregar una bolsa de regalo!</p>
+                </div>
+            </div>
+            
+            <div class="step-connector"></div>
+            
+            <!-- Paso 3 -->
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3>Recibe tu pedido</h3>
+                    <p>Nosotros nos encargamos del resto. Tu pedido llegará fresco y delicioso en la fecha acordada.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sección de zonas de entrega -->
+<section class="delivery-zones">
+    <div class="container">
+        <h2 class="section-title">Zonas de Entrega</h2>
+        <p class="section-subtitle">Llevamos la dulzura a toda La Habana</p>
+        
+        <div class="zones-info">
+            <div class="zone-card">
+                <h3><i class="fas fa-map-marker-alt"></i> Entrega Express</h3>
+                <p>Marianao, Playa, La Lisa</p>
+                <span class="zone-price">Desde 500 {{ currency }}</span>
+            </div>
+            
+            <div class="zone-card">
+                <h3><i class="fas fa-map-marker-alt"></i> Entrega Estándar</h3>
+                <p>Plaza, Centro Habana, Cerro, 10 de Octubre</p>
+                <span class="zone-price">Desde 750 {{ currency }}</span>
+            </div>
+            
+            <div class="zone-card">
+                <h3><i class="fas fa-map-marker-alt"></i> Entrega Extendida</h3>
+                <p>Boyeros, Arroyo Naranjo, San Miguel, Guanabacoa</p>
+                <span class="zone-price">Desde 1000 {{ currency }}</span>
+            </div>
+        </div>
+        
+        <p class="delivery-note">
+            <i class="fas fa-info-circle"></i> 
+            Si tu zona no está en nuestra cobertura, ¡no te preocupes! 
+            Podemos coordinar un punto de encuentro conveniente.
+        </p>
+    </div>
+</section>
+
+<!-- Sección de testimonios -->
+<section class="testimonials">
+    <div class="container">
+        <h2 class="section-title">Lo que dicen nuestros clientes</h2>
+        
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="testimonial-stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text">"Los mejores chocolates artesanales de La Habana. El sabor es increíble y la atención es excelente."</p>
+                <p class="testimonial-author">- María G.</p>
+            </div>
+            
+            <div class="testimonial-card">
+                <div class="testimonial-stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text">"Pedí para el cumpleaños de mi hija y llegaron perfectos. La bolsa de regalo es preciosa. ¡Volveré a pedir!"</p>
+                <p class="testimonial-author">- Carlos R.</p>
+            </div>
+            
+            <div class="testimonial-card">
+                <div class="testimonial-stars">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                </div>
+                <p class="testimonial-text">"El chocolate blanco es mi favorito. La entrega fue puntual y el mensajero muy amable. 100% recomendado."</p>
+                <p class="testimonial-author">- Ana M.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action final -->
+<section class="final-cta">
+    <div class="container">
+        <h2>¿Listo para endulzar tu día?</h2>
+        <p>Haz tu pedido ahora y recibe nuestros deliciosos chocolates artesanales</p>
+        <div class="cta-buttons">
+            <a href="{{ url_for('catalogo') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-shopping-cart"></i> Hacer Pedido Ahora
+            </a>
+            <a href="https://wa.me/5363661888" target="_blank" class="btn btn-whatsapp btn-lg">
+                <i class="fab fa-whatsapp"></i> Contactar por WhatsApp
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Animaciones para la entrada */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+    
+    .animate-fade-in-delay {
+        animation: fadeIn 0.8s ease-out 0.3s both;
+    }
+    
+    .animate-fade-in-delay-2 {
+        animation: fadeIn 0.8s ease-out 0.6s both;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animación suave al hacer scroll a las secciones
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Animación de aparición al hacer scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, observerOptions);
+    
+    // Observar elementos para animar
+    document.querySelectorAll('.feature-card, .product-preview-card, .step, .testimonial-card').forEach(el => {
+        observer.observe(el);
+    });
+</script>
+{% endblock %}
