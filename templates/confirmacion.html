@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block title %}Pedido Confirmado{% endblock %}
+
+{% block content %}
+<!-- Sección de confirmación exitosa -->
+<section class="confirmation-section">
+    <div class="container">
+        <div class="confirmation-card">
+            <!-- Icono de éxito animado -->
+            <div class="success-checkmark">
+                <div class="check-icon">
+                    <span class="icon-line line-tip"></span>
+                    <span class="icon-line line-long"></span>
+                    <div class="icon-circle"></div>
+                    <div class="icon-fix"></div>
+                </div>
+            </div>
+            
+            <!-- Mensaje principal -->
+            <h1 class="confirmation-title">¡Pedido Confirmado!</h1>
+            <p class="confirmation-subtitle">
+                Tu pedido <strong>#{{ pedido.numero_pedido }}</strong> ha sido recibido exitosamente
+            </p>
+            
+            <!-- Información importante -->
+            <div class="confirmation-info">
+                <div class="info-item">
+                    <i class="fas fa-calendar-check"></i>
+                    <div>
+                        <p class="info-label">Fecha de entrega</p>
+                        <p class="info-value">{{ pedido.fecha_entrega.strftime('%d de %B, %Y') }}</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <p class="info-label">Horario de entrega</p>
+                        <p class="info-value">{{ pedido.horario_entrega }}</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <p class="info-label">Dirección de entrega</p>
+                        <p class="info-value">{{ pedido.direccion_entrega }}<br>{{ pedido.municipio_entrega }}, {{ pedido.zona_entrega }}</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <i class="fas fa-coins"></i>
+                    <div>
+                        <p class="info-label">Total a pagar</p>
+                        <p class="info-value highlight">{{ pedido.total|int }} {{ currency }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Resumen del pedido -->
+            <div class="order-details">
+                <h3 class="details-title">Resumen de tu pedido</h3>
+                
+                <!-- Productos -->
+                <div class="details-section">
+                    <h4>Productos:</h4>
+                    {% for item in pedido.items %}
+                    <div class="detail-line">
+                        <span>{{ item.producto.nombre }} {{ item.producto.tamano|title }} x{{ item.cantidad }}</span>
+                        <span>{{ item.precio_total|int }} {{ currency }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Extras si los hay -->
+                {% if pedido.incluye_bolsa_regalo or pedido.incluye_tarjeta %}
+                <div class="details-section">
+                    <h4>Extras:</h4>
+                    {% if pedido.incluye_bolsa_regalo %}
+                    <div class="detail-line">
+                        <span><i class="fas fa-gift"></i> Bolsa de regalo</span>
+                        <span>200 {{ currency }}</span>
+                    </div>
+                    {% endif %}
+                    {% if pedido.incluye_tarjeta %}
+                    <div class="detail-line">
+                        <span><i class="fas fa-envelope"></i> Tarjeta personalizada</span>
+                        <span>150 {{ currency }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Envío -->
+                <div class="details-section">
+                    <div class="detail-line">
+                        <span><i class="fas fa-truck"></i> Costo de envío</span>
+                        <span>{{ pedido.costo_mensajeria|int }} {{ currency }}</span>
+                    </div>
+                </div>
+                
+                <!-- Total -->
+                <div class="detail-line total">
+                    <span>Total</span>
+                    <span>{{ pedido.total|int }} {{ currency }}</span>
+                </div>
+            </div>
+            
+            <!-- Información adicional -->
+            <div class="additional-info">
+                <h3>¿Qué sigue ahora?</h3>
+                <div class="next-steps">
+                    <div class="step">
+                        <i class="fas fa-check-circle"></i>
+                        <p>Hemos recibido tu pedido y comenzaremos a preparar tus deliciosos chocolates</p>
+                    </div>
+                    <div class="step">
+                        <i class="fas fa-phone"></i>
+                        <p>Te contactaremos al número <strong>{{ pedido.cliente.telefono }}</strong> si necesitamos confirmar algún detalle</p>
+                    </div>
+                    <div class="step">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <p>El pago se realizará en efectivo al momento de la entrega</p>
+                    </div>
+                    <div class="step">
+                        <i class="fas fa-heart"></i>
+                        <p>¡Prepárate para disfrutar del mejor chocolate artesanal de La Habana!</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Observaciones si las hay -->
+            {% if pedido.observaciones %}
+            <div class="observations-section">
+                <h4><i class="fas fa-sticky-note"></i> Tus observaciones:</h4>
+                <p class="observations-text">{{ pedido.observaciones }}</p>
+            </div>
+            {% endif %}
+            
+            <!-- Botones de acción -->
+            <div class="confirmation-actions">
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <i class="fas fa-home"></i> Volver al inicio
+                </a>
+                <a href="{{ url_for('catalogo') }}" class="btn btn-primary">
+                    <i class="fas fa-shopping-cart"></i> Hacer otro pedido
+                </a>
+            </div>
+            
+            <!-- Información de contacto -->
+            <div class="contact-reminder">
+                <p>¿Tienes alguna pregunta sobre tu pedido?</p>
+                <p>Contáctanos por WhatsApp: 
+                    <a href="https://wa.me/5363661888?text=Hola,%20tengo%20una%20consulta%20sobre%20mi%20pedido%20%23{{ pedido.numero_pedido }}" 
+                       target="_blank" class="whatsapp-link">
+                        <i class="fab fa-whatsapp"></i> +53 636 61888
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sección de recomendaciones -->
+<section class="recommendations-section">
+    <div class="container">
+        <h2 class="section-title">También te puede interesar</h2>
+        <div class="recommendations">
+            <div class="recommendation-card">
+                <i class="fas fa-birthday-cake"></i>
+                <h3>Pedidos para eventos</h3>
+                <p>¿Planeas una fiesta o evento especial? Contáctanos para pedidos grandes con descuentos especiales.</p>
+            </div>
+            
+            <div class="recommendation-card">
+                <i class="fas fa-users"></i>
+                <h3>Programa de fidelidad</h3>
+                <p>Pregunta por nuestro programa de clientes frecuentes y obtén descuentos en tus próximas compras.</p>
+            </div>
+            
+            <div class="recommendation-card">
+                <i class="fas fa-gift"></i>
+                <h3>Regalos corporativos</h3>
+                <p>Chocolates personalizados para tu empresa. La mejor forma de agradecer a clientes y empleados.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Animación del checkmark de éxito */
+    .success-checkmark {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 30px;
+    }
+    
+    .check-icon {
+        width: 80px;
+        height: 80px;
+        position: relative;
+        border-radius: 50%;
+        box-sizing: content-box;
+        border: 4px solid #4CAF50;
+        animation: checkmarkCircle 0.6s ease-in-out;
+    }
+    
+    .icon-line {
+        height: 5px;
+        background-color: #4CAF50;
+        display: block;
+        border-radius: 2px;
+        position: absolute;
+        z-index: 10;
+    }
+    
+    .line-tip {
+        top: 46px;
+        left: 14px;
+        width: 25px;
+        transform: rotate(45deg);
+        animation: checkmarkTip 0.5s ease-in-out 0.8s both;
+    }
+    
+    .line-long {
+        top: 38px;
+        right: 8px;
+        width: 47px;
+        transform: rotate(-45deg);
+        animation: checkmarkLong 0.5s ease-in-out 0.8s both;
+    }
+    
+    .icon-circle {
+        top: -4px;
+        left: -4px;
+        z-index: 10;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        position: absolute;
+        box-sizing: content-box;
+        border: 4px solid rgba(76, 175, 80, .5);
+    }
+    
+    .icon-fix {
+        top: 8px;
+        width: 5px;
+        left: 26px;
+        z-index: 1;
+        height: 85px;
+        position: absolute;
+        transform: rotate(45deg);
+        background-color: white;
+    }
+    
+    @keyframes checkmarkCircle {
+        0% {
+            transform: scale(0);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes checkmarkTip {
+        0% {
+            width: 0;
+            left: 1px;
+            top: 19px;
+        }
+        100% {
+            width: 25px;
+            left: 14px;
+            top: 46px;
+        }
+    }
+    
+    @keyframes checkmarkLong {
+        0% {
+            width: 0;
+            right: 46px;
+            top: 19px;
+        }
+        100% {
+            width: 47px;
+            right: 8px;
+            top: 38px;
+        }
+    }
+    
+    /* Animación de entrada para el contenido */
+    .confirmation-card {
+        animation: slideUp 0.6s ease-out;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Guardar el número de pedido en localStorage para referencia futura
+document.addEventListener('DOMContentLoaded', function() {
+    const orderNumber = '{{ pedido.numero_pedido }}';
+    
+    // Obtener pedidos anteriores o crear array vacío
+    let previousOrders = JSON.parse(localStorage.getItem('chocolatesbyb_orders') || '[]');
+    
+    // Agregar el nuevo pedido
+    previousOrders.push({
+        number: orderNumber,
+        date: new Date().toISOString(),
+        total: '{{ pedido.total }}'
+    });
+    
+    // Mantener solo los últimos 10 pedidos
+    if (previousOrders.length > 10) {
+        previousOrders = previousOrders.slice(-10);
+    }
+    
+    // Guardar en localStorage
+    localStorage.setItem('chocolatesbyb_orders', JSON.stringify(previousOrders));
+    
+    // Confetti effect opcional para celebrar
+    if (typeof confetti !== 'undefined') {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    }
+});
+
+// Función para copiar número de pedido al portapapeles
+function copiarNumeroPedido() {
+    const orderNumber = '{{ pedido.numero_pedido }}';
+    navigator.clipboard.writeText(orderNumber).then(function() {
+        alert('Número de pedido copiado: #' + orderNumber);
+    });
+}
+
+// Agregar evento de clic al número de pedido
+document.querySelector('.confirmation-subtitle strong').addEventListener('click', copiarNumeroPedido);
+document.querySelector('.confirmation-subtitle strong').style.cursor = 'pointer';
+document.querySelector('.confirmation-subtitle strong').title = 'Click para copiar';
+</script>
+{% endblock %}
