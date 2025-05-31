@@ -1,0 +1,25 @@
+# Dependencias principales
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+python-dotenv==1.0.0
+requests==2.31.0
+gunicorn==21.2.0
+
+# Dependencias de base de datos
+SQLAlchemy==2.0.23
+
+# Utilidades para fecha y hora
+pytz==2023.3
+
+# Para manejar formularios de manera más segura
+WTForms==3.1.1
+Flask-WTF==1.2.1
+
+# Para el hash de contraseñas
+werkzeug==3.0.1
+
+# Para Railway deployment
+click==8.1.7
+itsdangerous==2.1.2
+Jinja2==3.1.2
+MarkupSafe==2.1.3
