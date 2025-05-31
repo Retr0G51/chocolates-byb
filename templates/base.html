@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Chocolates ByB - Chocolates artesanales en La Habana">
+    
+    <!-- Título dinámico de la página -->
+    <title>{% block title %}Inicio{% endblock %} - {{ business_name }}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.ico') }}">
+    
+    <!-- CSS Principal -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Google Fonts para una tipografía elegante -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS adicional específico de cada página -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header/Navegación -->
+    <header class="main-header">
+        <nav class="navbar">
+            <div class="container">
+                <!-- Logo/Nombre de la marca -->
+                <div class="brand">
+                    <a href="{{ url_for('index') }}">
+                        <h1 class="brand-name">{{ business_name }}</h1>
+                        <p class="brand-tagline">Chocolates Artesanales</p>
+                    </a>
+                </div>
+                
+                <!-- Menú de navegación -->
+                <ul class="nav-menu">
+                    <li><a href="{{ url_for('index') }}" class="nav-link">Inicio</a></li>
+                    <li><a href="{{ url_for('catalogo') }}" class="nav-link">Catálogo</a></li>
+                    <li><a href="#contacto" class="nav-link">Contacto</a></li>
+                    {% if session.user_id %}
+                        <li><a href="{{ url_for('admin_dashboard') }}" class="nav-link admin-link">
+                            <i class="fas fa-user-shield"></i> Panel Admin
+                        </a></li>
+                    {% endif %}
+                </ul>
+                
+                <!-- Botón móvil -->
+                <button class="nav-toggle" id="navToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Sistema de mensajes flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible">
+                        <span>{{ message }}</span>
+                        <button type="button" class="close-alert" onclick="this.parentElement.remove()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Contenido principal de cada página -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="main-footer" id="contacto">
+        <div class="container">
+            <div class="footer-content">
+                <!-- Información de contacto -->
+                <div class="footer-section">
+                    <h3>Contacto</h3>
+                    <p><i class="fas fa-phone"></i> +53 636 61888</p>
+                    <p><i class="fas fa-map-marker-alt"></i> La Habana, Cuba</p>
+                    <div class="social-links">
+                        <a href="{{ facebook_url }}" target="_blank" class="social-link">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                        <a href="{{ instagram_url }}" target="_blank" class="social-link">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://wa.me/5363661888" target="_blank" class="social-link">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Horario -->
+                <div class="footer-section">
+                    <h3>Horario de Entrega</h3>
+                    <p>Lunes a Sábado</p>
+                    <p>8:00 AM - 9:00 PM</p>
+                    <p class="footer-note">Pedidos con 24h de anticipación</p>
+                </div>
+                
+                <!-- Información adicional -->
+                <div class="footer-section">
+                    <h3>Sobre Nosotros</h3>
+                    <p>Elaboramos chocolates artesanales con los mejores ingredientes y mucho amor.</p>
+                    <p>Entregas a domicilio en toda La Habana.</p>
+                </div>
+            </div>
+            
+            <!-- Copyright -->
+            <div class="footer-bottom">
+                <p>&copy; 2024 {{ business_name }}. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript principal -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- JavaScript adicional específico de cada página -->
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Script para el menú móvil -->
+    <script>
+        // Menú móvil toggle
+        document.getElementById('navToggle').addEventListener('click', function() {
+            const navMenu = document.querySelector('.nav-menu');
+            navMenu.classList.toggle('active');
+        });
+        
+        // Cerrar alertas automáticamente después de 5 segundos
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                alert.style.animation = 'slideOut 0.5s ease-out forwards';
+                setTimeout(function() {
+                    alert.remove();
+                }, 500);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>
