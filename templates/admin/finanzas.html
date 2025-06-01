@@ -1,0 +1,947 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión Financiera{% endblock %}
+
+{% block content %}
+<!-- Header del panel administrativo -->
+<div class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <h1 class="admin-title">Gestión Financiera</h1>
+            <div class="admin-actions">
+                <span class="admin-user">
+                    <i class="fas fa-user-circle"></i> {{ session.username }}
+                </span>
+                <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navegación del panel -->
+<nav class="admin-nav">
+    <div class="container">
+        <ul class="admin-nav-list">
+            <li>
+                <a href="{{ url_for('admin_dashboard') }}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_pedidos') }}">
+                    <i class="fas fa-shopping-cart"></i> Pedidos
+                </a>
+            </li>
+            <li class="active">
+                <a href="{{ url_for('admin_finanzas') }}">
+                    <i class="fas fa-chart-line"></i> Finanzas
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_trabajadores') }}">
+                    <i class="fas fa-users"></i> Trabajadores
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_estadisticas') }}">
+                    <i class="fas fa-chart-bar"></i> Estadísticas
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_tienda') }}">
+                    <i class="fas fa-store"></i> Tienda
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Contenido principal -->
+<section class="admin-content">
+    <div class="container">
+        <!-- Selector de período -->
+        <div class="period-selector">
+            <form method="GET" action="{{ url_for('admin_finanzas') }}" class="period-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="fecha_inicio">Desde:</label>
+                        <input type="date" 
+                               id="fecha_inicio" 
+                               name="fecha_inicio" 
+                               class="form-control" 
+                               value="{{ fecha_inicio.strftime('%Y-%m-%d') }}"
+                               max="{{ fecha_fin.strftime('%Y-%m-%d') }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="fecha_fin">Hasta:</label>
+                        <input type="date" 
+                               id="fecha_fin" 
+                               name="fecha_fin" 
+                               class="form-control" 
+                               value="{{ fecha_fin.strftime('%Y-%m-%d') }}"
+                               min="{{ fecha_inicio.strftime('%Y-%m-%d') }}"
+                               max="{{ fecha_fin.strftime('%Y-%m-%d') }}">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Botones de períodos rápidos -->
+                <div class="quick-periods">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPeriod('hoy')">
+                        Hoy
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPeriod('semana')">
+                        Esta Semana
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPeriod('mes')">
+                        Este Mes
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setPeriod('mes_anterior')">
+                        Mes Anterior
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Resumen de totales -->
+        <div class="financial-summary">
+            <div class="summary-card card-primary">
+                <div class="card-icon">
+                    <i class="fas fa-cash-register"></i>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Ventas Totales</h3>
+                    <p class="card-value">{{ totales.ventas|int }} CUP</p>
+                    <p class="card-meta">Ingresos brutos</p>
+                </div>
+            </div>
+            
+            <div class="summary-card card-success">
+                <div class="card-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Ganancia Negocio</h3>
+                    <p class="card-value">{{ totales.ganancias_negocio|int }} CUP</p>
+                    <p class="card-meta">30% de las ventas</p>
+                </div>
+            </div>
+            
+            <div class="summary-card card-warning">
+                <div class="card-icon">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Comisiones Totales</h3>
+                    <p class="card-value">{{ (totales.comisiones_gestor + totales.comisiones_mensajero + totales.comisiones_elaborador)|int }} CUP</p>
+                    <p class="card-meta">Pagadas a trabajadores</p>
+                </div>
+            </div>
+            
+            <div class="summary-card card-danger">
+                <div class="card-icon">
+                    <i class="fas fa-receipt"></i>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Gastos</h3>
+                    <p class="card-value">{{ totales.gastos|int }} CUP</p>
+                    <p class="card-meta">Otros gastos</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Desglose de comisiones -->
+        <div class="commission-breakdown">
+            <h2 class="section-title">
+                <i class="fas fa-users-cog"></i> Desglose de Comisiones
+            </h2>
+            
+            <div class="commission-cards">
+                <div class="commission-card">
+                    <div class="commission-header">
+                        <h4>Gestores</h4>
+                        <span class="commission-percentage">15%</span>
+                    </div>
+                    <div class="commission-amount">
+                        {{ totales.comisiones_gestor|int }} CUP
+                    </div>
+                    <div class="commission-chart">
+                        <div class="chart-bar" style="width: {{ (totales.comisiones_gestor / (totales.ventas or 1) * 100)|int }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="commission-card">
+                    <div class="commission-header">
+                        <h4>Mensajeros</h4>
+                        <span class="commission-percentage">10%</span>
+                    </div>
+                    <div class="commission-amount">
+                        {{ totales.comisiones_mensajero|int }} CUP
+                    </div>
+                    <div class="commission-chart">
+                        <div class="chart-bar" style="width: {{ (totales.comisiones_mensajero / (totales.ventas or 1) * 100)|int }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="commission-card">
+                    <div class="commission-header">
+                        <h4>Elaboradores</h4>
+                        <span class="commission-percentage">20%</span>
+                    </div>
+                    <div class="commission-amount">
+                        {{ totales.comisiones_elaborador|int }} CUP
+                    </div>
+                    <div class="commission-chart">
+                        <div class="chart-bar" style="width: {{ (totales.comisiones_elaborador / (totales.ventas or 1) * 100)|int }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráfico de flujo diario -->
+        <div class="daily-flow-section">
+            <h2 class="section-title">
+                <i class="fas fa-calendar-alt"></i> Flujo Diario
+            </h2>
+            
+            <div class="daily-flow-chart">
+                <canvas id="dailyFlowChart" width="400" height="150"></canvas>
+            </div>
+        </div>
+        
+        <!-- Tabla de transacciones -->
+        <div class="transactions-section">
+            <h2 class="section-title">
+                <i class="fas fa-list-alt"></i> Transacciones Detalladas
+            </h2>
+            
+            <div class="transaction-filters">
+                <button class="filter-btn active" data-filter="all">Todas</button>
+                <button class="filter-btn" data-filter="VENTA">Ventas</button>
+                <button class="filter-btn" data-filter="COMISION">Comisiones</button>
+                <button class="filter-btn" data-filter="GASTO">Gastos</button>
+                <button class="filter-btn" data-filter="GANANCIA_NEGOCIO">Ganancias</button>
+            </div>
+            
+            {% if transacciones %}
+            <div class="table-responsive">
+                <table class="admin-table transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Concepto</th>
+                            <th>Pedido</th>
+                            <th>Trabajador</th>
+                            <th>Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaccion in transacciones %}
+                        <tr class="transaction-row" data-type="{{ transaccion.tipo_transaccion }}">
+                            <td>
+                                {{ transaccion.fecha.strftime('%d/%m/%Y') }}<br>
+                                <small>{{ transaccion.fecha.strftime('%H:%M') }}</small>
+                            </td>
+                            <td>
+                                <span class="transaction-type type-{{ transaccion.tipo_transaccion|lower }}">
+                                    {{ transaccion.tipo_transaccion }}
+                                </span>
+                            </td>
+                            <td>{{ transaccion.concepto }}</td>
+                            <td>
+                                {% if transaccion.pedido %}
+                                <a href="{{ url_for('admin_pedidos', estado='todos') }}" class="order-link">
+                                    #{{ transaccion.pedido.numero_pedido }}
+                                </a>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if transaccion.trabajador %}
+                                <span class="worker-name">
+                                    {{ transaccion.trabajador.nombre }}
+                                    <small>({{ transaccion.trabajador.tipo }})</small>
+                                </span>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td class="amount-cell">
+                                <span class="amount {{ 'positive' if transaccion.tipo_transaccion in ['VENTA', 'GANANCIA_NEGOCIO'] else 'negative' }}">
+                                    {{ '+' if transaccion.tipo_transaccion in ['VENTA', 'GANANCIA_NEGOCIO'] else '-' }}
+                                    {{ transaccion.monto|int }} CUP
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-file-invoice fa-4x"></i>
+                <h3>No hay transacciones en este período</h3>
+                <p>Selecciona un rango de fechas diferente para ver las transacciones</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Botones de acción -->
+        <div class="finance-actions">
+            <button class="btn btn-success" onclick="registrarGasto()">
+                <i class="fas fa-plus-circle"></i> Registrar Gasto
+            </button>
+            <button class="btn btn-info" onclick="exportarReporte()">
+                <i class="fas fa-file-export"></i> Exportar Reporte
+            </button>
+            <button class="btn btn-primary" onclick="calcularBalance()">
+                <i class="fas fa-calculator"></i> Calcular Balance
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Modal para registrar gasto -->
+<div class="modal" id="gastoModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Registrar Nuevo Gasto</h3>
+            <button class="modal-close" onclick="closeModal('gastoModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="gastoForm">
+                <div class="form-group">
+                    <label for="concepto">Concepto:</label>
+                    <input type="text" id="concepto" class="form-control" required 
+                           placeholder="Ej: Compra de ingredientes">
+                </div>
+                <div class="form-group">
+                    <label for="monto">Monto (CUP):</label>
+                    <input type="number" id="monto" class="form-control" required 
+                           min="0" step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="observaciones">Observaciones:</label>
+                    <textarea id="observaciones" class="form-control" rows="3" 
+                              placeholder="Detalles adicionales (opcional)"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Guardar Gasto
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de balance -->
+<div class="modal" id="balanceModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Balance del Período</h3>
+            <button class="modal-close" onclick="closeModal('balanceModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="balanceContent">
+            <!-- Contenido generado dinámicamente -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos de finanzas */
+    .period-selector {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    
+    .period-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .form-row {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+    }
+    
+    .quick-periods {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    /* Tarjetas de resumen financiero */
+    .financial-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+    
+    .summary-card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    
+    .card-icon {
+        font-size: 3em;
+        margin-right: 20px;
+        opacity: 0.8;
+    }
+    
+    .card-primary .card-icon { color: #3498db; }
+    .card-success .card-icon { color: #27ae60; }
+    .card-warning .card-icon { color: #f39c12; }
+    .card-danger .card-icon { color: #e74c3c; }
+    
+    .card-value {
+        font-size: 2em;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+    
+    /* Desglose de comisiones */
+    .commission-breakdown {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .commission-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .commission-card {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .commission-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .commission-percentage {
+        background: #3498db;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.9em;
+        font-weight: bold;
+    }
+    
+    .commission-amount {
+        font-size: 1.8em;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 10px 0;
+    }
+    
+    .commission-chart {
+        height: 30px;
+        background: #e9ecef;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+    
+    .chart-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+        transition: width 1s ease-out;
+    }
+    
+    /* Gráfico de flujo diario */
+    .daily-flow-section {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* Tabla de transacciones */
+    .transactions-section {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .transaction-filters {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .filter-btn {
+        padding: 8px 16px;
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .filter-btn:hover {
+        background: #f8f9fa;
+    }
+    
+    .filter-btn.active {
+        background: #3498db;
+        color: white;
+        border-color: #3498db;
+    }
+    
+    /* Tipos de transacción */
+    .transaction-type {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    
+    .type-venta { background: #3498db; color: white; }
+    .type-comision { background: #f39c12; color: white; }
+    .type-gasto { background: #e74c3c; color: white; }
+    .type-ganancia_negocio { background: #27ae60; color: white; }
+    
+    /* Montos */
+    .amount {
+        font-weight: bold;
+        font-size: 1.1em;
+    }
+    
+    .amount.positive { color: #27ae60; }
+    .amount.negative { color: #e74c3c; }
+    
+    /* Botones de acción */
+    .finance-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 40px;
+        padding: 20px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-row {
+            flex-direction: column;
+        }
+        
+        .quick-periods {
+            flex-wrap: wrap;
+        }
+        
+        .financial-summary {
+            grid-template-columns: 1fr;
+        }
+        
+        .commission-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Configurar períodos rápidos
+function setPeriod(period) {
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch(period) {
+        case 'hoy':
+            startDate = endDate = today;
+            break;
+        case 'semana':
+            startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay());
+            endDate = today;
+            break;
+        case 'mes':
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            endDate = today;
+            break;
+        case 'mes_anterior':
+            startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+            break;
+    }
+    
+    document.getElementById('fecha_inicio').value = formatDate(startDate);
+    document.getElementById('fecha_fin').value = formatDate(endDate);
+    document.querySelector('.period-form').submit();
+}
+
+function formatDate(date) {
+    return date.toISOString().split('T')[0];
+}
+
+// Filtrar transacciones
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Actualizar botón activo
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Filtrar filas
+        const filter = this.dataset.filter;
+        const rows = document.querySelectorAll('.transaction-row');
+        
+        rows.forEach(row => {
+            if (filter === 'all' || row.dataset.type === filter) {
+                row.style.display = 'table-row';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+});
+
+// Gráfico de flujo diario
+const ctx = document.getElementById('dailyFlowChart');
+if (ctx) {
+    // Datos de ejemplo - en producción vendrían del servidor
+    const dailyData = {
+        labels: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'],
+        datasets: [{
+            label: 'Ventas',
+            data: [12000, 15000, 18000, 14000, 22000, 25000, 20000],
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            tension: 0.4
+        }, {
+            label: 'Gastos',
+            data: [8000, 9000, 7000, 8500, 12000, 14000, 11000],
+            borderColor: '#e74c3c',
+            backgroundColor: 'rgba(231, 76, 60, 0.1)',
+            tension: 0.4
+        }]
+    };
+    
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: dailyData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            });
+        }
+    }, 100);
+}
+
+// Cerrar modales
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// Función para mostrar notificaciones
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        ${message}
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Formatear números al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Formatear todos los valores monetarios con separadores de miles
+    document.querySelectorAll('.card-value, .commission-amount, .amount').forEach(el => {
+        const text = el.textContent;
+        const number = parseInt(text.replace(/[^\d]/g, ''));
+        if (!isNaN(number)) {
+            const formatted = number.toLocaleString('es-ES');
+            el.textContent = text.replace(number.toString(), formatted);
+        }
+    });
+    
+    // Animar las barras de progreso cuando sean visibles
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const bars = entry.target.querySelectorAll('.chart-bar');
+                bars.forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 100);
+                });
+            }
+        });
+    });
+    
+    const chartSections = document.querySelectorAll('.commission-chart');
+    chartSections.forEach(section => observer.observe(section));
+});
+
+// Atajo de teclado para registrar gasto rápido
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + G para registrar gasto
+    if ((e.ctrlKey || e.metaKey) && e.key === 'g') {
+        e.preventDefault();
+        registrarGasto();
+    }
+});
+</script>
+
+<style>
+/* Notificaciones flotantes */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #333;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    z-index: 9999;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification-success { background: #27ae60; }
+.notification-error { background: #e74c3c; }
+.notification-info { background: #3498db; }
+
+/* Balance modal específico */
+.balance-summary {
+    margin-bottom: 30px;
+}
+
+.balance-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.balance-total {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.balance-label {
+    color: #666;
+}
+
+.balance-value {
+    font-weight: bold;
+}
+
+.balance-value.positive { color: #27ae60; }
+.balance-value.negative { color: #e74c3c; }
+
+.balance-chart {
+    max-width: 300px;
+    margin: 20px auto;
+}
+</style>
+{% endblock %},
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y + ' CUP';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value + ' CUP';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Registrar gasto
+function registrarGasto() {
+    document.getElementById('gastoModal').style.display = 'block';
+}
+
+document.getElementById('gastoForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const concepto = document.getElementById('concepto').value;
+    const monto = document.getElementById('monto').value;
+    const observaciones = document.getElementById('observaciones').value;
+    
+    // Aquí iría la petición AJAX al servidor
+    showNotification('Gasto registrado correctamente', 'success');
+    closeModal('gastoModal');
+    
+    // Recargar la página para mostrar el nuevo gasto
+    setTimeout(() => location.reload(), 1000);
+});
+
+// Exportar reporte
+function exportarReporte() {
+    const fechaInicio = document.getElementById('fecha_inicio').value;
+    const fechaFin = document.getElementById('fecha_fin').value;
+    
+    // En producción, esto generaría un archivo Excel o PDF
+    showNotification('Generando reporte...', 'info');
+    
+    setTimeout(() => {
+        showNotification('Reporte generado correctamente', 'success');
+        // Aquí se descargaría el archivo
+    }, 1500);
+}
+
+// Calcular balance
+function calcularBalance() {
+    const modal = document.getElementById('balanceModal');
+    const content = document.getElementById('balanceContent');
+    
+    // Calcular balance basado en los totales actuales
+    const ventas = {{ totales.ventas|default(0) }};
+    const gastos = {{ totales.gastos|default(0) }};
+    const comisiones = {{ (totales.comisiones_gestor + totales.comisiones_mensajero + totales.comisiones_elaborador)|default(0) }};
+    const gananciaNegocio = {{ totales.ganancias_negocio|default(0) }};
+    
+    const balance = ventas - gastos - comisiones;
+    const margenGanancia = ventas > 0 ? (gananciaNegocio / ventas * 100).toFixed(2) : 0;
+    
+    content.innerHTML = `
+        <div class="balance-summary">
+            <div class="balance-item">
+                <span class="balance-label">Ingresos totales:</span>
+                <span class="balance-value positive">+${ventas.toFixed(2)} CUP</span>
+            </div>
+            <div class="balance-item">
+                <span class="balance-label">Gastos operativos:</span>
+                <span class="balance-value negative">-${gastos.toFixed(2)} CUP</span>
+            </div>
+            <div class="balance-item">
+                <span class="balance-label">Comisiones pagadas:</span>
+                <span class="balance-value negative">-${comisiones.toFixed(2)} CUP</span>
+            </div>
+            <hr>
+            <div class="balance-item balance-total">
+                <span class="balance-label">Balance neto:</span>
+                <span class="balance-value ${balance >= 0 ? 'positive' : 'negative'}">
+                    ${balance >= 0 ? '+' : ''}${balance.toFixed(2)} CUP
+                </span>
+            </div>
+            <div class="balance-item">
+                <span class="balance-label">Margen de ganancia:</span>
+                <span class="balance-value">${margenGanancia}%</span>
+            </div>
+        </div>
+        
+        <div class="balance-chart">
+            <canvas id="balanceChart" width="300" height="300"></canvas>
+        </div>
+    `;
+    
+    modal.style.display = 'block';
+    
+    // Crear gráfico de pastel para el balance
+    setTimeout(() => {
+        const ctx = document.getElementById('balanceChart');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Ganancia Negocio', 'Comisiones', 'Gastos'],
+                    datasets: [{
+                        data: [gananciaNegocio, comisiones, gastos],
+                        backgroundColor: ['#27ae60', '#f39c12', '#e74c3c']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return label + ': ' + value + ' CUP (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
