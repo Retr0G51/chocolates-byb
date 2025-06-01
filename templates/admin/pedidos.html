@@ -1,0 +1,783 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Pedidos{% endblock %}
+
+{% block content %}
+<!-- Header del panel administrativo -->
+<div class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <h1 class="admin-title">Gestión de Pedidos</h1>
+            <div class="admin-actions">
+                <span class="admin-user">
+                    <i class="fas fa-user-circle"></i> {{ session.username }}
+                </span>
+                <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navegación del panel -->
+<nav class="admin-nav">
+    <div class="container">
+        <ul class="admin-nav-list">
+            <li>
+                <a href="{{ url_for('admin_dashboard') }}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+            <li class="active">
+                <a href="{{ url_for('admin_pedidos') }}">
+                    <i class="fas fa-shopping-cart"></i> Pedidos
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_finanzas') }}">
+                    <i class="fas fa-chart-line"></i> Finanzas
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_trabajadores') }}">
+                    <i class="fas fa-users"></i> Trabajadores
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_estadisticas') }}">
+                    <i class="fas fa-chart-bar"></i> Estadísticas
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_tienda') }}">
+                    <i class="fas fa-store"></i> Tienda
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Contenido principal -->
+<section class="admin-content">
+    <div class="container">
+        <!-- Filtros y acciones -->
+        <div class="filters-section">
+            <form method="GET" action="{{ url_for('admin_pedidos') }}" class="filters-form">
+                <div class="filter-group">
+                    <label for="estado">Estado:</label>
+                    <select name="estado" id="estado" class="form-control" onchange="this.form.submit()">
+                        <option value="todos" {% if estado_filtro == 'todos' %}selected{% endif %}>Todos</option>
+                        <option value="PENDIENTE" {% if estado_filtro == 'PENDIENTE' %}selected{% endif %}>Pendientes</option>
+                        <option value="COMPLETADO" {% if estado_filtro == 'COMPLETADO' %}selected{% endif %}>Completados</option>
+                        <option value="CANCELADO" {% if estado_filtro == 'CANCELADO' %}selected{% endif %}>Cancelados</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="fecha">Fecha de entrega:</label>
+                    <input type="date" 
+                           name="fecha" 
+                           id="fecha" 
+                           class="form-control" 
+                           value="{{ fecha_filtro }}"
+                           onchange="this.form.submit()">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+                
+                <a href="{{ url_for('admin_pedidos') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Limpiar
+                </a>
+            </form>
+            
+            <div class="action-buttons">
+                <a href="{{ url_for('resumen_pedidos_dia') }}" class="btn btn-info">
+                    <i class="fas fa-clipboard-list"></i> Resumen del Día
+                </a>
+            </div>
+        </div>
+        
+        <!-- Estadísticas rápidas -->
+        <div class="stats-row">
+            <div class="stat-item">
+                <span class="stat-label">Total pedidos:</span>
+                <span class="stat-value">{{ pedidos|length }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Pendientes:</span>
+                <span class="stat-value text-warning">{{ pedidos|selectattr('estado', 'equalto', 'PENDIENTE')|list|length }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Completados:</span>
+                <span class="stat-value text-success">{{ pedidos|selectattr('estado', 'equalto', 'COMPLETADO')|list|length }}</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Cancelados:</span>
+                <span class="stat-value text-danger">{{ pedidos|selectattr('estado', 'equalto', 'CANCELADO')|list|length }}</span>
+            </div>
+        </div>
+        
+        <!-- Tabla de pedidos -->
+        {% if pedidos %}
+        <div class="table-responsive">
+            <table class="admin-table pedidos-table">
+                <thead>
+                    <tr>
+                        <th>Pedido</th>
+                        <th>Cliente</th>
+                        <th>Fecha Pedido</th>
+                        <th>Fecha Entrega</th>
+                        <th>Productos</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Trabajadores</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                    <tr class="pedido-row {% if pedido.modificado %}pedido-modificado{% endif %}">
+                        <td>
+                            <span class="order-number">#{{ pedido.numero_pedido }}</span>
+                            {% if pedido.modificado %}
+                            <span class="badge badge-info" title="Pedido modificado">
+                                <i class="fas fa-edit"></i>
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="cliente-info">
+                                <strong>{{ pedido.cliente.nombre }}</strong><br>
+                                <small>
+                                    <i class="fas fa-phone"></i> {{ pedido.cliente.telefono }}<br>
+                                    <i class="fas fa-map-marker-alt"></i> {{ pedido.zona_entrega }}
+                                </small>
+                            </div>
+                        </td>
+                        <td>
+                            {{ pedido.fecha_pedido.strftime('%d/%m/%Y') }}<br>
+                            <small>{{ pedido.fecha_pedido.strftime('%H:%M') }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ pedido.fecha_entrega.strftime('%d/%m/%Y') }}</strong><br>
+                            <span class="time-badge">{{ pedido.horario_entrega }}</span>
+                        </td>
+                        <td>
+                            <div class="productos-list">
+                                {% for item in pedido.items %}
+                                <span class="product-tag" title="{{ item.producto.nombre }} {{ item.producto.tamano|title }}">
+                                    {{ item.producto.tipo_chocolate|title }} 
+                                    {{ item.producto.tamano[:1].upper() }} 
+                                    x{{ item.cantidad }}
+                                </span>
+                                {% endfor %}
+                                {% if pedido.incluye_bolsa_regalo %}
+                                <span class="extra-tag" title="Bolsa de regalo">
+                                    <i class="fas fa-gift"></i>
+                                </span>
+                                {% endif %}
+                                {% if pedido.incluye_tarjeta %}
+                                <span class="extra-tag" title="Tarjeta personalizada">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="text-bold">
+                            {{ pedido.total|int }} CUP
+                        </td>
+                        <td>
+                            <select class="estado-select estado-{{ pedido.estado|lower }}" 
+                                    onchange="cambiarEstado({{ pedido.id }}, this.value)"
+                                    data-current="{{ pedido.estado }}">
+                                <option value="PENDIENTE" {% if pedido.estado == 'PENDIENTE' %}selected{% endif %}>
+                                    Pendiente
+                                </option>
+                                <option value="COMPLETADO" {% if pedido.estado == 'COMPLETADO' %}selected{% endif %}>
+                                    Completado
+                                </option>
+                                <option value="CANCELADO" {% if pedido.estado == 'CANCELADO' %}selected{% endif %}>
+                                    Cancelado
+                                </option>
+                            </select>
+                        </td>
+                        <td>
+                            <div class="trabajadores-asignados">
+                                <div class="trabajador-select">
+                                    <label>G:</label>
+                                    <select class="mini-select" onchange="asignarTrabajador({{ pedido.id }}, 'gestor', this.value)">
+                                        <option value="">-</option>
+                                        {% for t in trabajadores if t.tipo == 'GESTOR' and t.activo %}
+                                        <option value="{{ t.id }}" {% if pedido.gestor_id == t.id %}selected{% endif %}>
+                                            {{ t.nombre.split()[0] }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="trabajador-select">
+                                    <label>M:</label>
+                                    <select class="mini-select" onchange="asignarTrabajador({{ pedido.id }}, 'mensajero', this.value)">
+                                        <option value="">-</option>
+                                        {% for t in trabajadores if t.tipo == 'MENSAJERO' and t.activo %}
+                                        <option value="{{ t.id }}" {% if pedido.mensajero_id == t.id %}selected{% endif %}>
+                                            {{ t.nombre.split()[0] }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="trabajador-select">
+                                    <label>E:</label>
+                                    <select class="mini-select" onchange="asignarTrabajador({{ pedido.id }}, 'elaborador', this.value)">
+                                        <option value="">-</option>
+                                        {% for t in trabajadores if t.tipo == 'ELABORADOR' and t.activo %}
+                                        <option value="{{ t.id }}" {% if pedido.elaborador_id == t.id %}selected{% endif %}>
+                                            {{ t.nombre.split()[0] }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-info" 
+                                        onclick="verDetallesPedido({{ pedido.id }})" 
+                                        title="Ver detalles">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-warning" 
+                                        onclick="modificarPedido({{ pedido.id }})" 
+                                        title="Modificar pedido">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="https://wa.me/{{ pedido.cliente.telefono.replace('+', '') }}?text=Hola%20{{ pedido.cliente.nombre }},%20sobre%20tu%20pedido%20%23{{ pedido.numero_pedido }}..." 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-success" 
+                                   title="Contactar cliente">
+                                    <i class="fab fa-whatsapp"></i>
+                                </a>
+                                <button class="btn btn-sm btn-primary" 
+                                        onclick="reenviarNotificacion({{ pedido.id }})" 
+                                        title="Reenviar notificación">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-inbox fa-4x"></i>
+            <h3>No hay pedidos que mostrar</h3>
+            <p>Ajusta los filtros o espera a que lleguen nuevos pedidos</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Modal para detalles del pedido -->
+<div class="modal" id="orderDetailsModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3>Detalles del Pedido</h3>
+            <button class="modal-close" onclick="closeModal('orderDetailsModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="orderDetailsContent">
+            <!-- Contenido cargado dinámicamente -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal para modificar pedido -->
+<div class="modal" id="modifyOrderModal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3>Modificar Pedido</h3>
+            <button class="modal-close" onclick="closeModal('modifyOrderModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="modifyOrderContent">
+            <!-- Contenido cargado dinámicamente -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Header y navegación admin (reutilizar del dashboard) */
+    .admin-header {
+        background: #2c3e50;
+        color: white;
+        padding: 20px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .admin-nav {
+        background: #34495e;
+        border-bottom: 3px solid #e74c3c;
+    }
+    
+    .admin-nav-list {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+    }
+    
+    .admin-nav-list li.active a {
+        background: #2c3e50;
+    }
+    
+    /* Sección de filtros */
+    .filters-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .filters-form {
+        display: flex;
+        gap: 15px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+    
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    /* Estadísticas rápidas */
+    .stats-row {
+        display: flex;
+        gap: 30px;
+        margin-bottom: 30px;
+        padding: 15px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+    
+    .stat-value {
+        font-size: 1.2em;
+        font-weight: bold;
+    }
+    
+    /* Tabla de pedidos */
+    .pedidos-table {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .pedidos-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85em;
+        letter-spacing: 0.5px;
+    }
+    
+    .pedido-row.pedido-modificado {
+        background: #fff3cd;
+    }
+    
+    /* Selectores de estado */
+    .estado-select {
+        padding: 5px 10px;
+        border-radius: 20px;
+        border: 2px solid transparent;
+        font-weight: 500;
+        font-size: 0.85em;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .estado-select.estado-pendiente {
+        background: #ffeaa7;
+        color: #d63031;
+        border-color: #fdcb6e;
+    }
+    
+    .estado-select.estado-completado {
+        background: #55efc4;
+        color: #00b894;
+        border-color: #00b894;
+    }
+    
+    .estado-select.estado-cancelado {
+        background: #fab1a0;
+        color: #d63031;
+        border-color: #e17055;
+    }
+    
+    /* Mini selectores de trabajadores */
+    .trabajadores-asignados {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .trabajador-select {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .trabajador-select label {
+        font-weight: bold;
+        font-size: 0.8em;
+        margin: 0;
+        width: 15px;
+    }
+    
+    .mini-select {
+        padding: 2px 5px;
+        font-size: 0.8em;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        max-width: 80px;
+    }
+    
+    /* Tags de productos */
+    .product-tag {
+        display: inline-block;
+        background: #e9ecef;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        margin: 2px;
+    }
+    
+    .extra-tag {
+        display: inline-block;
+        background: #ffeaa7;
+        color: #d63031;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        margin: 2px;
+    }
+    
+    /* Animación de carga */
+    .loading-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .filters-section {
+            flex-direction: column;
+        }
+        
+        .stats-row {
+            flex-wrap: wrap;
+        }
+        
+        .pedidos-table {
+            font-size: 0.85em;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            gap: 5px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variable global para almacenar trabajadores
+let trabajadoresDisponibles = {{ trabajadores|tojson if trabajadores else '[]' }};
+
+// Función para cambiar estado del pedido
+async function cambiarEstado(pedidoId, nuevoEstado) {
+    if (!confirm(`¿Estás seguro de cambiar el estado a ${nuevoEstado}?`)) {
+        // Revertir el select al valor anterior
+        location.reload();
+        return;
+    }
+    
+    try {
+        const formData = new FormData();
+        formData.append('estado', nuevoEstado);
+        
+        const response = await fetch(`/admin/pedidos/${pedidoId}/cambiar-estado`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            showNotification('Estado actualizado correctamente', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification('Error al actualizar el estado', 'error');
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error de conexión', 'error');
+        location.reload();
+    }
+}
+
+// Función para asignar trabajador
+async function asignarTrabajador(pedidoId, tipoTrabajador, trabajadorId) {
+    try {
+        const formData = new FormData();
+        formData.append(`${tipoTrabajador}_id`, trabajadorId || '');
+        
+        const response = await fetch(`/admin/pedidos/${pedidoId}/asignar-trabajadores`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            showNotification(`${tipoTrabajador} asignado correctamente`, 'success');
+        } else {
+            showNotification('Error al asignar trabajador', 'error');
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Error de conexión', 'error');
+    }
+}
+
+// Función para ver detalles del pedido
+async function verDetallesPedido(pedidoId) {
+    const modal = document.getElementById('orderDetailsModal');
+    const content = document.getElementById('orderDetailsContent');
+    
+    // Mostrar loading
+    content.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-3x"></i></div>';
+    modal.style.display = 'block';
+    
+    // En una implementación real, aquí harías una petición AJAX
+    // Por ahora, simulamos con datos de ejemplo
+    setTimeout(() => {
+        content.innerHTML = `
+            <div class="order-details-complete">
+                <div class="detail-section">
+                    <h4>Información del Cliente</h4>
+                    <p><strong>Nombre:</strong> Cliente Ejemplo</p>
+                    <p><strong>Teléfono:</strong> +53 5XXXXXXX</p>
+                    <p><strong>Dirección completa:</strong> Calle 23 #456, entre 10 y 12, Vedado, Plaza</p>
+                </div>
+                
+                <div class="detail-section">
+                    <h4>Productos del Pedido</h4>
+                    <table class="mini-table">
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unit.</th>
+                            <th>Total</th>
+                        </tr>
+                        <tr>
+                            <td>Chocolate Oscuro Grande</td>
+                            <td>2</td>
+                            <td>1900 CUP</td>
+                            <td>3800 CUP</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div class="detail-section">
+                    <h4>Observaciones</h4>
+                    <p>Sin observaciones especiales</p>
+                </div>
+                
+                <div class="detail-section">
+                    <h4>Historial del Pedido</h4>
+                    <ul class="timeline">
+                        <li>Pedido creado - 15/03/2024 10:30</li>
+                        <li>Asignado a mensajero - 15/03/2024 14:00</li>
+                    </ul>
+                </div>
+            </div>
+        `;
+    }, 500);
+}
+
+// Función para modificar pedido
+function modificarPedido(pedidoId) {
+    const modal = document.getElementById('modifyOrderModal');
+    const content = document.getElementById('modifyOrderContent');
+    
+    content.innerHTML = `
+        <form id="modifyForm">
+            <div class="form-group">
+                <label>Razón de la modificación:</label>
+                <textarea class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Nueva fecha de entrega:</label>
+                <input type="date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Nuevo horario:</label>
+                <select class="form-control">
+                    <option>8:00-12:00</option>
+                    <option>12:00-17:00</option>
+                    <option>17:00-21:00</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </form>
+    `;
+    
+    modal.style.display = 'block';
+}
+
+// Función para reenviar notificación
+async function reenviarNotificacion(pedidoId) {
+    if (!confirm('¿Reenviar notificación de WhatsApp para este pedido?')) {
+        return;
+    }
+    
+    showNotification('Reenviando notificación...', 'info');
+    
+    // Simular envío
+    setTimeout(() => {
+        showNotification('Notificación enviada correctamente', 'success');
+    }, 1500);
+}
+
+// Función para cerrar modales
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Función para mostrar notificaciones
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        ${message}
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Cerrar modales al hacer clic fuera
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// Inicialización al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    // Resaltar filas con pedidos urgentes (entrega hoy)
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelectorAll('.pedido-row').forEach(row => {
+        const fechaEntrega = row.querySelector('td:nth-child(4) strong').textContent;
+        if (fechaEntrega === today) {
+            row.style.backgroundColor = '#ffe8e8';
+        }
+    });
+});
+
+// Función de búsqueda rápida con atajo de teclado
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K para búsqueda rápida
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchTerm = prompt('Buscar pedido por número:');
+        if (searchTerm) {
+            const rows = document.querySelectorAll('.pedido-row');
+            rows.forEach(row => {
+                const orderNumber = row.querySelector('.order-number').textContent;
+                if (orderNumber.includes(searchTerm)) {
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    row.style.animation = 'highlight 2s';
+                }
+            });
+        }
+    }
+});
+</script>
+
+<style>
+/* Notificaciones flotantes */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #333;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    z-index: 9999;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification-success { background: #27ae60; }
+.notification-error { background: #e74c3c; }
+.notification-info { background: #3498db; }
+
+/* Animación de resaltado */
+@keyframes highlight {
+    0% { background-color: #fff3cd; }
+    50% { background-color: #ffeaa7; }
+    100% { background-color: #fff3cd; }
+}
+</style>
+{% endblock %}
