@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Header del panel administrativo -->
+<div class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <h1 class="admin-title">Panel de Control</h1>
+            <div class="admin-actions">
+                <span class="admin-user">
+                    <i class="fas fa-user-circle"></i> {{ session.username }}
+                </span>
+                <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navegación del panel -->
+<nav class="admin-nav">
+    <div class="container">
+        <ul class="admin-nav-list">
+            <li class="active">
+                <a href="{{ url_for('admin_dashboard') }}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_pedidos') }}">
+                    <i class="fas fa-shopping-cart"></i> Pedidos
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_finanzas') }}">
+                    <i class="fas fa-chart-line"></i> Finanzas
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_trabajadores') }}">
+                    <i class="fas fa-users"></i> Trabajadores
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_estadisticas') }}">
+                    <i class="fas fa-chart-bar"></i> Estadísticas
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_tienda') }}">
+                    <i class="fas fa-store"></i> Tienda
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Contenido principal del dashboard -->
+<section class="admin-content">
+    <div class="container">
+        <!-- Tarjetas de resumen rápido -->
+        <div class="summary-cards">
+            <!-- Ventas del día -->
+            <div class="summary-card card-primary">
+                <div class="card-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Ventas Hoy</h3>
+                    <p class="card-value">{{ ventas_hoy|int }} CUP</p>
+                    <p class="card-meta">{{ pedidos_hoy }} pedidos</p>
+                </div>
+            </div>
+            
+            <!-- Pedidos pendientes -->
+            <div class="summary-card card-warning">
+                <div class="card-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Pedidos Pendientes</h3>
+                    <p class="card-value">{{ pedidos_pendientes }}</p>
+                    <p class="card-meta">Requieren atención</p>
+                </div>
+            </div>
+            
+            <!-- Pedidos para mañana -->
+            <div class="summary-card card-info">
+                <div class="card-icon">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Entregas Mañana</h3>
+                    <p class="card-value">{{ pedidos_manana|length }}</p>
+                    <p class="card-meta">Pedidos programados</p>
+                </div>
+            </div>
+            
+            <!-- Acción rápida -->
+            <div class="summary-card card-success">
+                <div class="card-icon">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <div class="card-content">
+                    <h3 class="card-title">Acción Rápida</h3>
+                    <a href="{{ url_for('admin_pedidos', estado='pendiente') }}" class="btn btn-success btn-sm">
+                        Ver Pendientes
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sección de pedidos para mañana -->
+        {% if pedidos_manana %}
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-truck"></i> Pedidos para Mañana
+                </h2>
+                <a href="{{ url_for('resumen_pedidos_dia') }}" class="btn btn-primary btn-sm">
+                    Ver Resumen Completo
+                </a>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Cliente</th>
+                            <th>Productos</th>
+                            <th>Zona</th>
+                            <th>Horario</th>
+                            <th>Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in pedidos_manana[:5] %}
+                        <tr>
+                            <td>
+                                <span class="order-number">#{{ pedido.numero_pedido }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ pedido.cliente.nombre }}</strong><br>
+                                <small>{{ pedido.cliente.telefono }}</small>
+                            </td>
+                            <td>
+                                {% for item in pedido.items %}
+                                    <span class="product-tag">
+                                        {{ item.producto.nombre }} {{ item.producto.tamano }} x{{ item.cantidad }}
+                                    </span>
+                                {% endfor %}
+                            </td>
+                            <td>{{ pedido.zona_entrega }}</td>
+                            <td>
+                                <span class="time-badge">{{ pedido.horario_entrega }}</span>
+                            </td>
+                            <td class="text-bold">{{ pedido.total|int }} CUP</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm btn-info" onclick="verDetallesPedido({{ pedido.id }})" title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <a href="https://wa.me/{{ pedido.cliente.telefono.replace('+', '') }}" 
+                                       target="_blank" 
+                                       class="btn btn-sm btn-success" 
+                                       title="Contactar cliente">
+                                        <i class="fab fa-whatsapp"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if pedidos_manana|length > 5 %}
+            <p class="text-center mt-3">
+                <small>Mostrando 5 de {{ pedidos_manana|length }} pedidos. 
+                <a href="{{ url_for('admin_pedidos', fecha=pedidos_manana[0].fecha_entrega.strftime('%Y-%m-%d')) }}">Ver todos</a></small>
+            </p>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-times"></i>
+            <p>No hay pedidos programados para mañana</p>
+        </div>
+        {% endif %}
+        
+        <!-- Sección de productos más vendidos -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-star"></i> Productos Más Vendidos (Este Mes)
+                </h2>
+            </div>
+            
+            {% if productos_populares %}
+            <div class="products-chart">
+                {% for producto in productos_populares %}
+                <div class="product-bar">
+                    <div class="product-info">
+                        <span class="product-name">{{ producto.nombre }} - {{ producto.tipo_chocolate|title }}</span>
+                        <span class="product-sales">{{ producto.total_vendido }} unidades</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ (producto.total_vendido / productos_populares[0].total_vendido * 100)|int }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No hay datos de ventas este mes</p>
+            {% endif %}
+        </div>
+        
+        <!-- Accesos rápidos -->
+        <div class="dashboard-section">
+            <h2 class="section-title">
+                <i class="fas fa-bolt"></i> Accesos Rápidos
+            </h2>
+            
+            <div class="quick-actions">
+                <a href="{{ url_for('resumen_pedidos_dia') }}" class="quick-action-card">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Resumen del Día</span>
+                </a>
+                
+                <a href="{{ url_for('admin_pedidos', estado='pendiente') }}" class="quick-action-card">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span>Pedidos Pendientes</span>
+                </a>
+                
+                <a href="{{ url_for('admin_finanzas') }}" class="quick-action-card">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Finanzas del Mes</span>
+                </a>
+                
+                <a href="{{ url_for('admin_trabajadores') }}" class="quick-action-card">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Gestionar Personal</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal para ver detalles del pedido -->
+<div class="modal" id="orderDetailsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Detalles del Pedido</h3>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="orderDetailsContent">
+            <!-- El contenido se carga dinámicamente -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos del dashboard */
+    .admin-header {
+        background: #2c3e50;
+        color: white;
+        padding: 20px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .admin-nav {
+        background: #34495e;
+        border-bottom: 3px solid #e74c3c;
+    }
+    
+    .admin-nav-list {
+        display: flex;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        overflow-x: auto;
+    }
+    
+    .admin-nav-list li {
+        flex-shrink: 0;
+    }
+    
+    .admin-nav-list a {
+        display: block;
+        padding: 15px 20px;
+        color: #ecf0f1;
+        text-decoration: none;
+        transition: background 0.3s;
+    }
+    
+    .admin-nav-list li.active a,
+    .admin-nav-list a:hover {
+        background: #2c3e50;
+    }
+    
+    /* Tarjetas de resumen */
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+    
+    .summary-card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+    
+    .card-primary { border-left: 5px solid #3498db; }
+    .card-warning { border-left: 5px solid #f39c12; }
+    .card-info { border-left: 5px solid #00bcd4; }
+    .card-success { border-left: 5px solid #27ae60; }
+    
+    /* Gráfico de barras de productos */
+    .product-bar {
+        margin-bottom: 15px;
+    }
+    
+    .progress-bar {
+        background: #ecf0f1;
+        height: 30px;
+        border-radius: 15px;
+        overflow: hidden;
+        margin-top: 5px;
+    }
+    
+    .progress-fill {
+        background: linear-gradient(90deg, #3498db, #2ecc71);
+        height: 100%;
+        transition: width 1s ease-out;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 10px;
+        color: white;
+        font-weight: bold;
+    }
+    
+    /* Acciones rápidas */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+    }
+    
+    .quick-action-card {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 30px 20px;
+        text-align: center;
+        text-decoration: none;
+        color: #495057;
+        transition: all 0.3s;
+    }
+    
+    .quick-action-card:hover {
+        background: #e9ecef;
+        border-color: #dee2e6;
+        transform: translateY(-3px);
+    }
+    
+    .quick-action-card i {
+        font-size: 2em;
+        margin-bottom: 10px;
+        display: block;
+        color: #3498db;
+    }
+    
+    /* Animación de entrada */
+    .summary-card,
+    .dashboard-section {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Estado vacío */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4em;
+        margin-bottom: 20px;
+        opacity: 0.3;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Función para ver detalles del pedido
+async function verDetallesPedido(pedidoId) {
+    const modal = document.getElementById('orderDetailsModal');
+    const content = document.getElementById('orderDetailsContent');
+    
+    // Mostrar loading
+    content.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
+    modal.style.display = 'block';
+    
+    // Aquí normalmente harías una petición AJAX para obtener los detalles
+    // Por ahora, simulamos con datos de ejemplo
+    setTimeout(() => {
+        content.innerHTML = `
+            <div class="order-details-full">
+                <p><strong>Pedido:</strong> #${pedidoId}</p>
+                <p><strong>Estado:</strong> <span class="badge badge-warning">Pendiente</span></p>
+                <p><strong>Cliente:</strong> Juan Pérez</p>
+                <p><strong>Teléfono:</strong> +53 5XXXXXXX</p>
+                <p><strong>Dirección:</strong> Calle 23 #456, Vedado, Plaza</p>
+                <hr>
+                <h4>Productos:</h4>
+                <ul>
+                    <li>Chocolate Oscuro Grande x2</li>
+                    <li>Chocolate Blanco Pequeño x1</li>
+                </ul>
+                <p><strong>Total:</strong> 4750 CUP</p>
+            </div>
+        `;
+    }, 500);
+}
+
+// Función para cerrar el modal
+function closeModal() {
+    document.getElementById('orderDetailsModal').style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    const modal = document.getElementById('orderDetailsModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Auto-actualización del dashboard cada 5 minutos
+let refreshInterval;
+
+function startAutoRefresh() {
+    refreshInterval = setInterval(() => {
+        // En producción, aquí harías una petición AJAX para actualizar los datos
+        console.log('Actualizando datos del dashboard...');
+        // location.reload(); // Descomentar si quieres recargar la página
+    }, 300000); // 5 minutos
+}
+
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+}
+
+// Iniciar auto-actualización cuando la página esté visible
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        stopAutoRefresh();
+    } else {
+        startAutoRefresh();
+    }
+});
+
+// Iniciar al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    startAutoRefresh();
+    
+    // Animar las barras de progreso cuando sean visibles
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const progressBars = entry.target.querySelectorAll('.progress-fill');
+                progressBars.forEach(bar => {
+                    const width = bar.style.width;
+                    bar.style.width = '0';
+                    setTimeout(() => {
+                        bar.style.width = width;
+                    }, 100);
+                });
+            }
+        });
+    });
+    
+    const chartSection = document.querySelector('.products-chart');
+    if (chartSection) {
+        observer.observe(chartSection);
+    }
+});
+
+// Función para formatear números con separadores de miles
+function formatNumber(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Aplicar formato a todos los valores monetarios
+document.querySelectorAll('.card-value').forEach(el => {
+    const value = parseInt(el.textContent);
+    if (!isNaN(value)) {
+        el.textContent = formatNumber(value) + ' CUP';
+    }
+});
+</script>
+{% endblock %}
