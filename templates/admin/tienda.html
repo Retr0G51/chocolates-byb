@@ -1,0 +1,1207 @@
+{% extends "base.html" %}
+
+{% block title %}Configuración de Tienda{% endblock %}
+
+{% block content %}
+<!-- Header del panel administrativo -->
+<div class="admin-header">
+    <div class="container">
+        <div class="admin-header-content">
+            <h1 class="admin-title">Configuración de Tienda</h1>
+            <div class="admin-actions">
+                <span class="admin-user">
+                    <i class="fas fa-user-circle"></i> {{ session.username }}
+                </span>
+                <a href="{{ url_for('admin_logout') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navegación del panel -->
+<nav class="admin-nav">
+    <div class="container">
+        <ul class="admin-nav-list">
+            <li>
+                <a href="{{ url_for('admin_dashboard') }}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_pedidos') }}">
+                    <i class="fas fa-shopping-cart"></i> Pedidos
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_finanzas') }}">
+                    <i class="fas fa-chart-line"></i> Finanzas
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_trabajadores') }}">
+                    <i class="fas fa-users"></i> Trabajadores
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('admin_estadisticas') }}">
+                    <i class="fas fa-chart-bar"></i> Estadísticas
+                </a>
+            </li>
+            <li class="active">
+                <a href="{{ url_for('admin_tienda') }}">
+                    <i class="fas fa-store"></i> Tienda
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Contenido principal -->
+<section class="admin-content">
+    <div class="container">
+        <!-- Tabs de configuración -->
+        <div class="config-tabs">
+            <button class="config-tab active" data-tab="productos">
+                <i class="fas fa-box"></i> Productos
+            </button>
+            <button class="config-tab" data-tab="precios">
+                <i class="fas fa-tags"></i> Precios y Extras
+            </button>
+            <button class="config-tab" data-tab="zonas">
+                <i class="fas fa-map-marked-alt"></i> Zonas de Entrega
+            </button>
+            <button class="config-tab" data-tab="horarios">
+                <i class="fas fa-clock"></i> Horarios
+            </button>
+            <button class="config-tab" data-tab="general">
+                <i class="fas fa-cog"></i> General
+            </button>
+        </div>
+        
+        <!-- Contenido de los tabs -->
+        <div class="tab-content">
+            <!-- Tab de Productos -->
+            <div class="tab-pane active" id="productos-tab">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-box"></i> Gestión de Productos
+                    </h2>
+                    <button class="btn btn-primary" onclick="mostrarFormularioProducto()">
+                        <i class="fas fa-plus"></i> Agregar Producto
+                    </button>
+                </div>
+                
+                <!-- Grid de productos -->
+                <div class="products-grid">
+                    {% for producto in productos %}
+                    <div class="product-admin-card" data-product-id="{{ producto.id }}">
+                        <div class="product-status">
+                            <span class="status-badge {{ 'available' if producto.disponible else 'unavailable' }}">
+                                {{ 'Disponible' if producto.disponible else 'No disponible' }}
+                            </span>
+                        </div>
+                        
+                        <div class="product-image-placeholder">
+                            <i class="fas fa-image fa-3x"></i>
+                            <button class="btn-upload-image" onclick="uploadImage({{ producto.id }})">
+                                <i class="fas fa-camera"></i> Subir imagen
+                            </button>
+                        </div>
+                        
+                        <div class="product-info">
+                            <h3>{{ producto.nombre }}</h3>
+                            <p class="product-details">
+                                <span class="badge badge-chocolate {{ producto.tipo_chocolate }}">
+                                    {{ producto.tipo_chocolate|title }}
+                                </span>
+                                <span class="badge badge-size">{{ producto.tamano|title }} - {{ producto.peso_gramos }}g</span>
+                            </p>
+                            <p class="product-price">{{ producto.precio|int }} CUP</p>
+                            
+                            {% if producto.descripcion %}
+                            <p class="product-description">{{ producto.descripcion }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="product-actions">
+                            <button class="btn btn-sm btn-warning" onclick="editarProducto({{ producto.id }})">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <form action="{{ url_for('toggle_producto_disponible', producto_id=producto.id) }}" 
+                                  method="POST" style="display: inline;">
+                                <button type="submit" 
+                                        class="btn btn-sm {{ 'btn-danger' if producto.disponible else 'btn-success' }}"
+                                        onclick="return confirm('¿Cambiar disponibilidad de este producto?')">
+                                    <i class="fas fa-{{ 'times' if producto.disponible else 'check' }}"></i>
+                                    {{ 'Desactivar' if producto.disponible else 'Activar' }}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Tab de Precios y Extras -->
+            <div class="tab-pane" id="precios-tab">
+                <h2 class="section-title">
+                    <i class="fas fa-tags"></i> Configuración de Precios y Extras
+                </h2>
+                
+                <div class="config-grid">
+                    <!-- Precios base -->
+                    <div class="config-card">
+                        <h3>Precios Base por Tamaño</h3>
+                        <form id="pricesForm">
+                            <div class="form-group">
+                                <label>Chocolate Pequeño (115g)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" value="950" min="0">
+                                    <span class="input-addon">CUP</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Chocolate Grande (230g)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" value="1900" min="0">
+                                    <span class="input-addon">CUP</span>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Precios
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Extras -->
+                    <div class="config-card">
+                        <h3>Precios de Extras</h3>
+                        <form id="extrasForm">
+                            <div class="form-group">
+                                <label>Bolsa de Regalo</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" value="200" min="0">
+                                    <span class="input-addon">CUP</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Tarjeta Personalizada</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" value="150" min="0">
+                                    <span class="input-addon">CUP</span>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Extras
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Comisiones -->
+                    <div class="config-card">
+                        <h3>Porcentajes de Comisión</h3>
+                        <form id="commissionsForm">
+                            <div class="form-group">
+                                <label>Gestores</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" value="15" min="0" max="100">
+                                    <span class="input-addon">%</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Mensajeros</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" value="10" min="0" max="100">
+                                    <span class="input-addon">%</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Elaboradores</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" value="20" min="0" max="100">
+                                    <span class="input-addon">%</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Inversionistas</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" value="25" min="0" max="100">
+                                    <span class="input-addon">%</span>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Comisiones
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab de Zonas -->
+            <div class="tab-pane" id="zonas-tab">
+                <h2 class="section-title">
+                    <i class="fas fa-map-marked-alt"></i> Zonas de Entrega y Costos
+                </h2>
+                
+                <div class="zones-management">
+                    <div class="zone-selector">
+                        <select id="municipioSelect" class="form-control" onchange="cargarZonas()">
+                            <option value="">Selecciona un municipio</option>
+                            <option value="Marianao">Marianao</option>
+                            <option value="Playa">Playa</option>
+                            <option value="La Lisa">La Lisa</option>
+                            <option value="Plaza">Plaza</option>
+                            <option value="Centro Habana">Centro Habana</option>
+                            <option value="Habana Vieja">Habana Vieja</option>
+                            <option value="Boyeros">Boyeros</option>
+                            <option value="Cerro">Cerro</option>
+                            <option value="10 de Octubre">10 de Octubre</option>
+                            <option value="Arroyo Naranjo">Arroyo Naranjo</option>
+                            <option value="San Miguel">San Miguel</option>
+                            <option value="Guanabacoa">Guanabacoa</option>
+                        </select>
+                    </div>
+                    
+                    <div id="zonasContainer" class="zones-list">
+                        <p class="text-muted">Selecciona un municipio para ver sus zonas</p>
+                    </div>
+                    
+                    <div class="zone-summary">
+                        <h4>Resumen de Cobertura</h4>
+                        <div class="coverage-stats">
+                            <div class="stat">
+                                <span class="stat-number">12</span>
+                                <span class="stat-label">Municipios cubiertos</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number">156</span>
+                                <span class="stat-label">Zonas activas</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-number">500-2150</span>
+                                <span class="stat-label">Rango de precios (CUP)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab de Horarios -->
+            <div class="tab-pane" id="horarios-tab">
+                <h2 class="section-title">
+                    <i class="fas fa-clock"></i> Horarios de Entrega
+                </h2>
+                
+                <div class="schedule-config">
+                    <div class="config-card">
+                        <h3>Franjas Horarias Disponibles</h3>
+                        <div class="time-slots">
+                            <div class="time-slot">
+                                <input type="checkbox" id="morning" checked>
+                                <label for="morning">
+                                    <i class="fas fa-sun"></i>
+                                    <span class="slot-name">Mañana</span>
+                                    <span class="slot-time">8:00 AM - 12:00 PM</span>
+                                </label>
+                            </div>
+                            <div class="time-slot">
+                                <input type="checkbox" id="afternoon" checked>
+                                <label for="afternoon">
+                                    <i class="fas fa-cloud-sun"></i>
+                                    <span class="slot-name">Tarde</span>
+                                    <span class="slot-time">12:00 PM - 5:00 PM</span>
+                                </label>
+                            </div>
+                            <div class="time-slot">
+                                <input type="checkbox" id="evening" checked>
+                                <label for="evening">
+                                    <i class="fas fa-moon"></i>
+                                    <span class="slot-name">Noche</span>
+                                    <span class="slot-time">5:00 PM - 9:00 PM</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="config-card">
+                        <h3>Días de Entrega</h3>
+                        <div class="weekdays">
+                            <label class="weekday">
+                                <input type="checkbox" checked>
+                                <span>Lun</span>
+                            </label>
+                            <label class="weekday">
+                                <input type="checkbox" checked>
+                                <span>Mar</span>
+                            </label>
+                            <label class="weekday">
+                                <input type="checkbox" checked>
+                                <span>Mié</span>
+                            </label>
+                            <label class="weekday">
+                                <input type="checkbox" checked>
+                                <span>Jue</span>
+                            </label>
+                            <label class="weekday">
+                                <input type="checkbox" checked>
+                                <span>Vie</span>
+                            </label>
+                            <label class="weekday">
+                                <input type="checkbox" checked>
+                                <span>Sáb</span>
+                            </label>
+                            <label class="weekday">
+                                <input type="checkbox">
+                                <span>Dom</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-group mt-3">
+                            <label>Tiempo mínimo de anticipación para pedidos</label>
+                            <select class="form-control">
+                                <option value="24" selected>24 horas</option>
+                                <option value="12">12 horas</option>
+                                <option value="48">48 horas</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab General -->
+            <div class="tab-pane" id="general-tab">
+                <h2 class="section-title">
+                    <i class="fas fa-cog"></i> Configuración General
+                </h2>
+                
+                <div class="general-config">
+                    <div class="config-card">
+                        <h3>Información del Negocio</h3>
+                        <form id="businessForm">
+                            <div class="form-group">
+                                <label>Nombre del Negocio</label>
+                                <input type="text" class="form-control" value="Chocolates ByB">
+                            </div>
+                            <div class="form-group">
+                                <label>Teléfono WhatsApp</label>
+                                <input type="tel" class="form-control" value="+53 636 61888">
+                            </div>
+                            <div class="form-group">
+                                <label>Facebook</label>
+                                <input type="url" class="form-control" value="https://facebook.com/ChocolatesBnb">
+                            </div>
+                            <div class="form-group">
+                                <label>Instagram</label>
+                                <input type="url" class="form-control" value="https://instagram.com/chocolates_byb">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Guardar Información
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="config-card">
+                        <h3>Notificaciones</h3>
+                        <div class="notification-settings">
+                            <label class="switch-container">
+                                <input type="checkbox" checked>
+                                <span class="switch"></span>
+                                <span class="switch-label">Notificar nuevos pedidos por WhatsApp</span>
+                            </label>
+                            <label class="switch-container">
+                                <input type="checkbox" checked>
+                                <span class="switch"></span>
+                                <span class="switch-label">Resumen diario automático</span>
+                            </label>
+                            <label class="switch-container">
+                                <input type="checkbox">
+                                <span class="switch"></span>
+                                <span class="switch-label">Alertas de stock bajo</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="config-card danger-zone">
+                        <h3>Zona de Peligro</h3>
+                        <p class="text-muted">Estas acciones son irreversibles. Úsalas con cuidado.</p>
+                        <button class="btn btn-danger" onclick="exportarBaseDatos()">
+                            <i class="fas fa-download"></i> Exportar Base de Datos
+                        </button>
+                        <button class="btn btn-danger" onclick="limpiarPedidosAntiguos()">
+                            <i class="fas fa-trash"></i> Limpiar Pedidos Antiguos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal para producto -->
+<div class="modal" id="productModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="productModalTitle">Agregar Producto</h3>
+            <button class="modal-close" onclick="closeModal('productModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="productForm">
+                <div class="form-group">
+                    <label>Nombre del producto</label>
+                    <input type="text" class="form-control" id="productName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tipo de chocolate</label>
+                    <select class="form-control" id="productType" required>
+                        <option value="">Selecciona...</option>
+                        <option value="oscuro">Chocolate Oscuro</option>
+                        <option value="leche">Chocolate con Leche</option>
+                        <option value="blanco">Chocolate Blanco</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tamaño</label>
+                    <select class="form-control" id="productSize" required>
+                        <option value="">Selecciona...</option>
+                        <option value="pequeno">Pequeño (115g)</option>
+                        <option value="grande">Grande (230g)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Precio (CUP)</label>
+                    <input type="number" class="form-control" id="productPrice" min="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea class="form-control" id="productDescription" rows="3"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('productModal')">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos del header y navegación */
+    .admin-header {
+        background: #2c3e50;
+        color: white;
+        padding: 20px 0;
+    }
+    
+    .admin-nav {
+        background: #34495e;
+        border-bottom: 3px solid #e74c3c;
+    }
+    
+    /* Tabs de configuración */
+    .config-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        overflow-x: auto;
+    }
+    
+    .config-tab {
+        padding: 12px 24px;
+        border: 2px solid #e9ecef;
+        background: white;
+        border-radius: 25px;
+        transition: all 0.3s;
+    }
+    
+    .switch::before {
+        content: '';
+        position: absolute;
+        width: 21px;
+        height: 21px;
+        background: white;
+        border-radius: 50%;
+        top: 2px;
+        left: 2px;
+        transition: all 0.3s;
+    }
+    
+    .switch-container input:checked + .switch {
+        background: #3498db;
+    }
+    
+    .switch-container input:checked + .switch::before {
+        left: 27px;
+    }
+    
+    /* Zona de peligro */
+    .danger-zone {
+        border: 2px solid #e74c3c;
+        background: #ffeee9;
+    }
+    
+    .danger-zone h3 {
+        color: #e74c3c;
+    }
+    
+    /* Estadísticas de cobertura */
+    .coverage-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 20px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+    
+    .coverage-stats .stat {
+        text-align: center;
+    }
+    
+    .stat-number {
+        display: block;
+        font-size: 2em;
+        font-weight: bold;
+        color: #3498db;
+    }
+    
+    .stat-label {
+        display: block;
+        color: #6c757d;
+        font-size: 0.9em;
+        margin-top: 5px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .config-tabs {
+            flex-wrap: wrap;
+        }
+        
+        .config-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .products-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Gestión de tabs
+document.querySelectorAll('.config-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        // Actualizar tab activo
+        document.querySelectorAll('.config-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Mostrar contenido correspondiente
+        const tabId = this.dataset.tab + '-tab';
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+    });
+});
+
+// Mostrar formulario de producto
+function mostrarFormularioProducto() {
+    document.getElementById('productModalTitle').textContent = 'Agregar Producto';
+    document.getElementById('productForm').reset();
+    document.getElementById('productModal').style.display = 'block';
+}
+
+// Editar producto
+function editarProducto(id) {
+    document.getElementById('productModalTitle').textContent = 'Editar Producto';
+    // Aquí cargarías los datos del producto
+    document.getElementById('productModal').style.display = 'block';
+}
+
+// Subir imagen de producto
+function uploadImage(productId) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    
+    input.onchange = function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            showNotification(`Subiendo imagen para producto ${productId}...`, 'info');
+            
+            // Simular subida
+            setTimeout(() => {
+                showNotification('Imagen subida correctamente', 'success');
+            }, 1500);
+        }
+    };
+    
+    input.click();
+}
+
+// Cargar zonas por municipio
+function cargarZonas() {
+    const municipio = document.getElementById('municipioSelect').value;
+    const container = document.getElementById('zonasContainer');
+    
+    if (!municipio) {
+        container.innerHTML = '<p class="text-muted">Selecciona un municipio para ver sus zonas</p>';
+        return;
+    }
+    
+    // Datos de ejemplo - en producción vendrían del servidor
+    const zonasPorMunicipio = {
+        'Marianao': [
+            { nombre: 'Todo', precio: 500 },
+            { nombre: 'CUJAE', precio: 600 }
+        ],
+        'Playa': [
+            { nombre: 'Almendares', precio: 500 },
+            { nombre: 'Buena Vista', precio: 500 },
+            { nombre: 'Querejeta', precio: 500 },
+            { nombre: 'Jaimanitas', precio: 500 },
+            { nombre: 'Flores', precio: 500 },
+            { nombre: 'Náutico', precio: 500 },
+            { nombre: 'Siboney', precio: 500 },
+            { nombre: 'Atabey', precio: 500 },
+            { nombre: 'Miramar', precio: 550 },
+            { nombre: 'Kholy', precio: 550 },
+            { nombre: 'La Ceiba', precio: 550 },
+            { nombre: 'Santa Fé', precio: 600 }
+        ]
+        // Más municipios...
+    };
+    
+    const zonas = zonasPorMunicipio[municipio] || [];
+    
+    if (zonas.length === 0) {
+        container.innerHTML = '<p class="text-muted">No hay zonas configuradas para este municipio</p>';
+        return;
+    }
+    
+    let html = `<h4>${municipio} - ${zonas.length} zonas</h4>`;
+    zonas.forEach(zona => {
+        html += `
+            <div class="zone-item">
+                <span>${zona.nombre}</span>
+                <div class="zone-price">
+                    <input type="number" value="${zona.precio}" min="0" class="form-control form-control-sm" style="width: 100px;">
+                    <span>CUP</span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="toggleZona(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    html += `
+        <button class="btn btn-primary btn-sm mt-3" onclick="guardarZonas('${municipio}')">
+            <i class="fas fa-save"></i> Guardar cambios
+        </button>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Toggle zona activa/inactiva
+function toggleZona(button) {
+    const zoneItem = button.closest('.zone-item');
+    zoneItem.classList.toggle('disabled');
+    
+    const icon = button.querySelector('i');
+    if (zoneItem.classList.contains('disabled')) {
+        icon.className = 'fas fa-check';
+        button.classList.remove('btn-outline-danger');
+        button.classList.add('btn-outline-success');
+    } else {
+        icon.className = 'fas fa-times';
+        button.classList.remove('btn-outline-success');
+        button.classList.add('btn-outline-danger');
+    }
+}
+
+// Guardar zonas
+function guardarZonas(municipio) {
+    showNotification(`Guardando zonas de ${municipio}...`, 'info');
+    
+    setTimeout(() => {
+        showNotification('Zonas actualizadas correctamente', 'success');
+    }, 1000);
+}
+
+// Formularios de configuración
+document.getElementById('pricesForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    showNotification('Precios actualizados correctamente', 'success');
+});
+
+document.getElementById('extrasForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    showNotification('Extras actualizados correctamente', 'success');
+});
+
+document.getElementById('commissionsForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    showNotification('Comisiones actualizadas correctamente', 'success');
+});
+
+document.getElementById('businessForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    showNotification('Información del negocio actualizada', 'success');
+});
+
+document.getElementById('productForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    showNotification('Producto guardado correctamente', 'success');
+    closeModal('productModal');
+    
+    // Recargar página para mostrar el nuevo producto
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+});
+
+// Exportar base de datos
+function exportarBaseDatos() {
+    if (confirm('¿Estás seguro de que deseas exportar toda la base de datos?')) {
+        showNotification('Preparando exportación...', 'info');
+        
+        setTimeout(() => {
+            showNotification('Base de datos exportada correctamente', 'success');
+            // Aquí se descargaría el archivo
+        }, 2000);
+    }
+}
+
+// Limpiar pedidos antiguos
+function limpiarPedidosAntiguos() {
+    const meses = prompt('¿Eliminar pedidos más antiguos de cuántos meses?', '6');
+    
+    if (meses && confirm(`¿Estás seguro de eliminar todos los pedidos más antiguos de ${meses} meses? Esta acción NO se puede deshacer.`)) {
+        showNotification('Limpiando pedidos antiguos...', 'warning');
+        
+        setTimeout(() => {
+            showNotification(`Se eliminaron 45 pedidos antiguos`, 'success');
+        }, 2000);
+    }
+}
+
+// Cerrar modal
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// Función para mostrar notificaciones
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+        ${message}
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// Atajos de teclado
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + S para guardar
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        const activeForm = document.querySelector('.tab-pane.active form');
+        if (activeForm) {
+            activeForm.dispatchEvent(new Event('submit'));
+        }
+    }
+    
+    // Ctrl/Cmd + P para agregar producto
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        if (document.getElementById('productos-tab').classList.contains('active')) {
+            mostrarFormularioProducto();
+        }
+    }
+});
+
+// Animación de entrada
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.config-card, .product-admin-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
+});
+</script>
+
+<style>
+/* Notificaciones */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #333;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transform: translateX(400px);
+    transition: transform 0.3s ease;
+    z-index: 9999;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification-success { background: #27ae60; }
+.notification-error { background: #e74c3c; }
+.notification-info { background: #3498db; }
+.notification-warning { background: #f39c12; }
+
+/* Zona deshabilitada */
+.zone-item.disabled {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+/* Animaciones adicionales */
+.product-admin-card {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}
+        cursor: pointer;
+        transition: all 0.3s;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .config-tab:hover {
+        background: #f8f9fa;
+    }
+    
+    .config-tab.active {
+        background: #3498db;
+        color: white;
+        border-color: #3498db;
+    }
+    
+    /* Contenido de tabs */
+    .tab-content {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .tab-pane {
+        display: none;
+    }
+    
+    .tab-pane.active {
+        display: block;
+    }
+    
+    /* Grid de productos admin */
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .product-admin-card {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        position: relative;
+        transition: all 0.3s;
+    }
+    
+    .product-admin-card:hover {
+        border-color: #3498db;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .product-status {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: bold;
+    }
+    
+    .status-badge.available {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-badge.unavailable {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .product-image-placeholder {
+        width: 100%;
+        height: 150px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 15px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-upload-image {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.8em;
+    }
+    
+    /* Badges de chocolate */
+    .badge-chocolate {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8em;
+        color: white;
+    }
+    
+    .badge-chocolate.oscuro {
+        background: #3e2723;
+    }
+    
+    .badge-chocolate.leche {
+        background: #8d6e63;
+    }
+    
+    .badge-chocolate.blanco {
+        background: #9e9e9e;
+    }
+    
+    /* Grid de configuración */
+    .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 30px;
+    }
+    
+    .config-card {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .config-card h3 {
+        margin-bottom: 20px;
+        color: #2c3e50;
+    }
+    
+    /* Input groups */
+    .input-group {
+        display: flex;
+        align-items: center;
+    }
+    
+    .input-group .form-control {
+        border-radius: 5px 0 0 5px;
+    }
+    
+    .input-addon {
+        background: #e9ecef;
+        padding: 8px 15px;
+        border: 1px solid #ced4da;
+        border-left: 0;
+        border-radius: 0 5px 5px 0;
+        font-weight: 500;
+    }
+    
+    /* Gestión de zonas */
+    .zones-list {
+        margin: 20px 0;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+    }
+    
+    .zone-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        margin: 5px 0;
+        background: #f8f9fa;
+        border-radius: 5px;
+    }
+    
+    .zone-price {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    /* Configuración de horarios */
+    .time-slots {
+        display: grid;
+        gap: 15px;
+    }
+    
+    .time-slot {
+        position: relative;
+    }
+    
+    .time-slot input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .time-slot label {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .time-slot input:checked + label {
+        background: #e3f2fd;
+        border-color: #3498db;
+    }
+    
+    .slot-name {
+        font-weight: 600;
+    }
+    
+    .slot-time {
+        color: #6c757d;
+        font-size: 0.9em;
+    }
+    
+    /* Días de la semana */
+    .weekdays {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+    }
+    
+    .weekday {
+        position: relative;
+        flex: 1;
+        text-align: center;
+    }
+    
+    .weekday input {
+        position: absolute;
+        opacity: 0;
+    }
+    
+    .weekday span {
+        display: block;
+        padding: 10px;
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .weekday input:checked + span {
+        background: #3498db;
+        color: white;
+        border-color: #3498db;
+    }
+    
+    /* Switch toggles */
+    .switch-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin: 15px 0;
+        cursor: pointer;
+    }
+    
+    .switch {
+        position: relative;
+        width: 50px;
+        height: 25px;
+        background: #ccc;
+        border-radius: 25px;
